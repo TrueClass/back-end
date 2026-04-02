@@ -10,5 +10,6 @@ class StudentCreate(BaseModel):
 class StudentCreateResponse(BaseModel):
     id: int
 
-    class Config:
-        from_attributes = True
+    model_config = {
+        "from_attributes": True
+    }
