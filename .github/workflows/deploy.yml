@@ -18,3 +18,6 @@ jobs:
         run: |
           sudo systemctl daemon-reload
           sudo systemctl restart trueclass.service
+
+      - name: Create .env file
+        run: echo "${{ secrets.ENV_FILE }}" > app/.env
