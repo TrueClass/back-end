@@ -1,0 +1,1 @@
+STUDENT_INSERT_QUERY = "INSERT INTO HL.students (institution_id, email,password_hash) VALUES (%s,%s,%s)"

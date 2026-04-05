@@ -1,0 +1,24 @@
+name: Deploy Backend
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Environment
+        run: |
+          python3 -m venv venv
+          ./venv/bin/pip install -r requirements.txt
+          
+      - name: Start/Restart API
+        run: |
+          ls -la
+
+      - name: Start/Restart API
+        run: |
+          sudo systemctl daemon-reload
+          sudo systemctl restart trueclass.service
