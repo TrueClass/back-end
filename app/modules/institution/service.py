@@ -1,7 +1,7 @@
 import mysql.connector
 from mysql.connector import errorcode
 from argon2 import PasswordHasher, Type
-import models
+from . import models
 
 def create_new_institution(name: str, db) -> object:
     """
