@@ -1,3 +1,3 @@
-STUDENT_INSERT_QUERY = "INSERT INTO HL.students (institution_id, email,password_hash) VALUES (%s,%s,%s)"
-INSTITUTION_INSERT_QUERY = "INSERT INTO HL.institution (name) VALUES (%s)"
-INSTITUTION_OBTAIN_QUERY = "SELECT id_name FROM HL.institution"
+STUDENT_INSERT_QUERY = "INSERT INTO TC.students (institution_id, email,password_hash) VALUES (%s,%s,%s)"
+INSTITUTION_INSERT_QUERY = "INSERT INTO TC.institution (name) VALUES (%s)"
+INSTITUTION_OBTAIN_QUERY = "SELECT id_name FROM TC.institution"
