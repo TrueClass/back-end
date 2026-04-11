@@ -66,6 +66,18 @@ def passwordHash(password):
 
     return ph.hash(password)
 
+def get_student_by_institution(institution_id: int, limit: int, page: int, db):
+    cursor = db.cursor(dictionary=True)
+    values = (institution_id, limit, limit*(page-1))
+
+    cursor.execute(models.STUDENT_SELECT_QUERY,values)
+    result = cursor.fetchall()
+
+    cursor.execute(models.STUDENT_COUNT_QUERY,(institution_id,))
+    total = cursor.fetchone()['count']
+
+    return (result, total)
+
 # Personalized errors
 class UserAlreadyExistsError(Exception):
     """Raised when there's already an account created with the e-mail informed"""
