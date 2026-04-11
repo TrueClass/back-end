@@ -1,7 +1,35 @@
 import mysql.connector
 from mysql.connector import errorcode
 from argon2 import PasswordHasher, Type
-from .models import STUDENT_INSERT_QUERY
+import models
+
+def create_new_institution(name: str, db) -> object:
+    """
+    Consume a new student info sent from a POST API request and store it on mySQL. Returns the created institution's code.
+    """
+    cursor = db.cursor()
+    values = (name,)
+
+    try:
+        cursor.execute(models.INSTITUTION_INSERT_QUERY,values)
+        db.commit()
+        return { "id": cursor.lastrowid }
+    
+    finally:
+        cursor.close()
+
+def obtain_institution(db) -> list:
+    """
+    Returns a list of institution, containing id and name for each of them
+    """
+    cursor = db.cursor(dictionary=True)
+
+    try:
+        cursor.execute(models.INSTITUTION_OBTAIN_QUERY)
+        result = cursor.fetchall()
+        return result
+    finally:
+        cursor.close()
 
 def create_new_student(institution_id: int, data: object, db) -> object:
     """
@@ -13,7 +41,7 @@ def create_new_student(institution_id: int, data: object, db) -> object:
     values = (institution_id, data.email, hashed_password)
 
     try:
-        cursor.execute(STUDENT_INSERT_QUERY,values)
+        cursor.execute(models.STUDENT_INSERT_QUERY,values)
         db.commit()
         return { "id": cursor.lastrowid }
 
