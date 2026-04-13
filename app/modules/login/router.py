@@ -3,7 +3,7 @@ from app.core.database import get_db
 from . import service, schemas
 
 # Criando uma instância do APIRouter, prefix diz que a todas as rotas começam com students e tags 
-router = APIRouter(prefix="/login", tags=["Alunos"])
+router = APIRouter(prefix="/login", tags=["Login"])
 
 @router.post("/", response_model=schemas.LoginResponse, status_code=200)
 async def login(login_in: schemas.Login, db = Depends(get_db)):
