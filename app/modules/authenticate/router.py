@@ -4,7 +4,7 @@ from . import service
 
 router = APIRouter(prefix="/authenticate", tags=["Autenticação"])
 
-@router.get("/authenticate")
+@router.get("/")
 async def authenticate_request(
     refresh_token: str = Cookie(None), 
     cache = Depends(get_redis)
