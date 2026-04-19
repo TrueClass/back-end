@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from app.core.database import get_db, get_redis
+from app.core.database import get_db
 from . import service, schemas
 
 # Criando uma instância do APIRouter, prefix diz que a todas as rotas começam com students e tags 

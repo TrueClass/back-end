@@ -10,10 +10,10 @@ async def authenticate_request(
     cache = Depends(get_redis)
 ):
     try:
-        if(service.is_token_valid(refresh_token, cache)):
+        if(await service.is_token_valid(refresh_token, cache)):
             return Response(status_code=200)
     except service.TokenNotRecieved:
-        raise HTTPException(status_code=401, detail="Token wasn't informed on requisition.")
+        raise HTTPException(status_code=401, detail="Token wasn't informed on request.")
     except service.TokenNotActive:
         raise HTTPException(status_code=401, detail="Token isn't active on database")
     except service.InvalidOrInaccessibleToken:
