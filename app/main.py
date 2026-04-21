@@ -1,10 +1,13 @@
 from fastapi import FastAPI
 from app.core.database import lifespan
+from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 from app.modules.authenticate.router import router as authenticate_router
 from app.modules.institution.router import router as institution_router
 from app.modules.login.router import router as login_router
 
-app = FastAPI(title="TrueClass API", lifespan=lifespan)
+app = FastAPI(title="TrueClass API", lifespan=lifespan, redirect_slashes=False)
+
+app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
 
 # Incluindo as rotas que criamos
 app.include_router(authenticate_router)
