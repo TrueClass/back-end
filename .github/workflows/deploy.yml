@@ -19,19 +19,6 @@ jobs:
           echo "ACCESS_SECRET_KEY=${{ secrets.ACCESS_SECRET_KEY }}" >> .env
           echo "REFRESH_SECRET_KEY=${{ secrets.REFRESH_SECRET_KEY }}" >> .env
 
-
-DATABASE_HOST = '192.168.15.117'
-MYSQL_USER = 'joao'
-MYSQL_PASSWORD = 'Kh&E#O1E!Xkd3sI9jDSc'
-MYSQL_DATABASE = 'TC'
-MYSQL_PORT = 3306
-REDIS_PASSWORD = 'Lf$0FCKZ@AooL#%FHc08'
-REDIS_PORT = 6379
-
-ACCESS_SECRET_KEY = '4ec5048476dc9a98b4daa8daf6bdb4ea2f25085cdde0f60eac56a3d69ec6f49d'
-REFRESH_SECRET_KEY
-
-
       - uses: actions/checkout@v4
       
       - name: Setup Environment
