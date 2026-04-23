@@ -7,6 +7,31 @@ jobs:
   deploy:
     runs-on: self-hosted
     steps:
+      - name: "Generate .env file from GitHub Secrets"
+        run: |
+          echo "DATABASE_HOST=${{ secrets.DATABASE_HOST }}" > .env
+          echo "MYSQL_USER=${{ secrets.MYSQL_USER }}" >> .env
+          echo "MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}" >> .env
+          echo "MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }}" >> .env
+          echo "MYSQL_PORT=${{ secrets.MYSQL_PORT }}" >> .env
+          echo "REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}" >> .env
+          echo "REDIS_PORT=${{ secrets.REDIS_PORT }}" >> .env
+          echo "ACCESS_SECRET_KEY=${{ secrets.ACCESS_SECRET_KEY }}" >> .env
+          echo "REFRESH_SECRET_KEY=${{ secrets.REFRESH_SECRET_KEY }}" >> .env
+
+
+DATABASE_HOST = '192.168.15.117'
+MYSQL_USER = 'joao'
+MYSQL_PASSWORD = 'Kh&E#O1E!Xkd3sI9jDSc'
+MYSQL_DATABASE = 'TC'
+MYSQL_PORT = 3306
+REDIS_PASSWORD = 'Lf$0FCKZ@AooL#%FHc08'
+REDIS_PORT = 6379
+
+ACCESS_SECRET_KEY = '4ec5048476dc9a98b4daa8daf6bdb4ea2f25085cdde0f60eac56a3d69ec6f49d'
+REFRESH_SECRET_KEY
+
+
       - uses: actions/checkout@v4
       
       - name: Setup Environment
