@@ -14,71 +14,73 @@ async def authenticate_user(data: object, db, cache) -> object:
     """
     Consume a login info sent from a POST API request, authenticate it, and return a JWT (JSON Web Token).
     """
-    cursor = db.cursor(dictionary=True)
-    values = (data.email,)
+    user = fetch_user_info(data.email, db)
 
-    # Search for a professor
-    cursor.execute(LOGIN_SELECT_PROFESSOR_QUERY,values)
-    user = cursor.fetchone()
-    user_type = "professor"
-
-    # If it isn't a professor, search for a student
-    if not user:
-        cursor.execute(LOGIN_SELECT_STUDENT_QUERY, values)
-        user = cursor.fetchone()
-        user_type = "student"
-    
-    # If the user doesn't exist
-    if not user:
-        raise IncorrectUserOrPassword()
-    
     # Check if the password is right and create data to return
     if verify_password(
         user["password_hash"].encode('utf-8'), 
         data.password.encode('utf-8'), 
         Type.ID):
-        
-        user.update({"role" : user_type})
-        user_id = str(user["id"])
-        sub_data = {
-            "sub" : user_id
-        }
 
-        access_token = create_access_token(sub_data.copy(),user)
-        refresh_token, jti = create_refresh_token(sub_data.copy())
+        access_token = create_access_token(user)
+        refresh_token, jti = create_refresh_token(user)
 
         #TrueClass:Refresh:User_id:Token
-        await cache.set(f"tc:ref:{user_id}:{jti}", "active", ex=604800)
+        await cache.set(f"tc:ref:{user["email"]}:{jti}", "active", ex=604800)
 
         return (access_token, refresh_token)
     
     # Returns None if user missed his password
     raise IncorrectUserOrPassword()
 
-def create_access_token(to_encode: object, user: object) -> object:
+def fetch_user_info(email:str, db) -> object:
+    cursor = db.cursor(dictionary=True)
+    values = (email,)
+
+    # Search for a professor
+    cursor.execute(LOGIN_SELECT_PROFESSOR_QUERY,values)
+    user = cursor.fetchone()
+    user_role = "professor"
+    
+    # If it isn't a professor, search for a student
+    if not user:
+        cursor.execute(LOGIN_SELECT_STUDENT_QUERY, values)
+        user = cursor.fetchone()
+        user_role = "student"
+    
+    # If the user doesn't exist
+    if not user:
+        raise IncorrectUserOrPassword()
+    
+    user.update({"role" : user_role})
+    
+    return user
+
+def create_access_token(user: object) -> object:
     expire = int((datetime.now(timezone.utc) + timedelta(minutes=30)).timestamp())
     iat = int(datetime.now(timezone.utc).timestamp())
 
-    to_encode.update({
-        "email" : user["email"],
+    to_encode ={
+        "sub" : user["email"],
+        "role" : user["role"],
         "type" : "access",
         "exp" : expire,
-        "iat" : iat,
-        "role" : user["role"]
-    })
+        "iat" : iat
+    }
 
     token = jwt.encode(to_encode, ACCESS_SECRET_KEY, algorithm="HS256")
     return token
 
-def create_refresh_token(to_encode: object) -> object:
+def create_refresh_token(user: object) -> object:
     expire = int((datetime.now(timezone.utc) + timedelta(days=7)).timestamp())
     jti = str(uuid4())
 
-    to_encode.update({
+    to_encode ={
+        "sub" : user["email"],
         "type" : "refresh",
         "jti" : jti,
         "exp" : expire
-    })
+    }
 
     token = jwt.encode(to_encode, REFRESH_SECRET_KEY, algorithm="HS256")
     return token, jti

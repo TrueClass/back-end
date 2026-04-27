@@ -10,8 +10,6 @@ async def login(response: Response, login_in: schemas.Login, db = Depends(get_db
     try:
         login_data = await service.authenticate_user(login_in, db, cache)
 
-        print(f"DEBUG: Gerado Refresh Token: {login_data[1][:10]}...")
-
         response.set_cookie(
             key="refresh_token",
             value=login_data[1],
