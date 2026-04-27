@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from app.core.database import get_db
+from app.core.access_validation import validate_access_token
 from . import service, schemas
 
 # Criando uma instância do APIRouter, prefix diz que a todas as rotas começam com students e tags 
-router = APIRouter(prefix="/institution", tags=["Instituição"])
+router = APIRouter(prefix="/institution", tags=["Instituição"], dependencies=[Depends(validate_access_token)])
 
 @router.get("/", response_model=schemas.InstitutionObtain, status_code=200)
 async def obtain_institutions(db = Depends(get_db)):
