@@ -10,6 +10,12 @@ jobs:
       - name: "Checkout code"
         uses: actions/checkout@v4
 
+      - name: "Generate .env file from Single Secret"
+        run: |
+          DEST="/home/joao/actions-runner/_work/back-end/back-end/.env"
+          echo "${{ secrets.ENV_FILE }}" > $DEST
+          chmod 600 $DEST
+      
       - name: "Validate .env existence"
         run: |
           if [ -s "/home/joao/actions-runner/_work/back-end/back-end/.env" ]; then
@@ -19,12 +25,6 @@ jobs:
             exit 1
           fi
 
-      - name: "Generate .env file from Single Secret"
-        run: |
-          DEST="/home/joao/actions-runner/_work/back-end/back-end/.env"
-          echo "${{ secrets.ENV_FILE }}" > $DEST
-          chmod 600 $DEST
-      
       - name: Setup Environment
         run: |
           python3 -m venv venv
