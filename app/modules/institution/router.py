@@ -47,3 +47,23 @@ async def create_professor(institution_id: int, professor_in: schemas.ProfessorC
         raise HTTPException(status_code=422, detail="Institution informed doesn't exist")
     except service.CoordinatorDoesntExistError:
         raise HTTPException(status_code=422, detail="Coordinator informed doesn't exist")
+
+@router.post("/{institution_id}/classes", response_model=schemas.ClassCreateResponse, status_code=201)
+async def create_class(institution_id: int, class_in: schemas.ClassCreate, db = Depends(get_db), payload=Depends(validate_access_token)):
+    email = payload.get("sub")
+    new_class = service.create_new_class(institution_id, class_in, email,db)
+    return new_class
+
+@router.get("/{institution_id}/classes", response_model=schemas.ClassListResponse, status_code=200)
+async def get_class(institution_id: int, db = Depends(get_db), payload=Depends(validate_access_token)):
+    email = payload.get("sub")
+    role = payload.get("role")
+    result = service.get_classes(email, role, db)
+    return {"classes": result}
+
+@router.get("/{institution_id}/classes/{class_id}/items", response_model=schemas.ClassDatesResponse, status_code=200)
+async def get_class_items(institution_id: int, class_id: int, db = Depends(get_db)):
+    result = service.get_class_itens(class_id, db)
+    if not result:
+        raise HTTPException(status_code=404, detail="No date found for this class")
+    return {"dates": result}

@@ -2,6 +2,7 @@ import mysql.connector
 from mysql.connector import errorcode
 from argon2 import PasswordHasher, Type
 from . import models
+from datetime import timedelta
 
 def create_new_institution(data: object, db) -> object:
     """
@@ -164,6 +165,102 @@ def get_professor_by_institution(institution_id: int, limit: int, page: int, db)
 
     return (total, professors)
 
+def calculate_dates(start_date, end_date, is_biweekly, biweekly_week=None) -> list:
+    dates = []
+    current = start_date
+
+    all_weeks = []
+
+    while current <= end_date:
+        all_weeks.append(current)
+        current += timedelta(days=7)
+
+    if not is_biweekly:
+        return all_weeks
+
+    if biweekly_week == "A":
+        return [date for i, date in enumerate(all_weeks) if i % 2 == 0]
+    elif biweekly_week == "B":
+        return [date for i, date in enumerate(all_weeks) if i % 2 == 1]
+
+
+def create_new_class(institution_id: int, data: object, email: str, db) -> object:
+    cursor = db.cursor(dictionary=True)
+
+    try:
+        professor_id = get_user_id_by_email(email, "professor", db)
+
+        dates = calculate_dates(
+            data.start_date,
+            data.end_date,
+            data.is_biweekly,
+            data.biweekly_week
+        )
+
+        biweekly = 1 if data.is_biweekly else 0
+
+        values = (
+            data.subject,
+            biweekly,
+            data.biweekly_week,
+            professor_id
+        )
+
+        cursor.execute(models.CLASS_INSERT_QUERY, values)
+        class_id = cursor.lastrowid
+
+        for class_date in dates:
+            cursor.execute(models.CLASS_ITEM_INSERT_QUERY, (str(class_date), class_id))
+
+        db.commit()
+
+        return {"id": class_id, "subject": data.subject}
+
+    except Exception as e:
+        db.rollback()
+        raise e
+
+    finally:
+        cursor.close()
+
+
+def get_user_id_by_email(email: str, role: str, db):
+    cursor = db.cursor(dictionary=True)
+    try:
+        if role == "professor":
+            cursor.execute(models.GET_ID_BY_EMAIL_PROFESSOR_QUERY, (email,))
+        else:
+            cursor.execute(models.GET_ID_BY_EMAIL_STUDENT_QUERY, (email,))
+        row = cursor.fetchone()
+        if row is None:
+            raise UserNotFoundError()
+        return row["id"]
+    finally:
+        cursor.close()
+
+
+def get_classes(email: str, role: str, db):
+    cursor = db.cursor(dictionary=True)
+    try:
+        user_id = get_user_id_by_email(email, role, db)
+        if role == "student":
+            cursor.execute(models.CLASS_GET_BY_STUDENT_QUERY, (user_id,))
+        else:
+            cursor.execute(models.CLASS_GET_BY_PROFESSOR_QUERY, (user_id,))
+        rows = cursor.fetchall()
+        return [dict(row) for row in rows]
+    finally:
+        cursor.close()
+
+def get_class_itens(class_id: int, db):
+    cursor = db.cursor(dictionary=True)
+    try:
+        cursor.execute(models.CLASS_ITENS_GET_QUERY, (class_id,))
+        rows = cursor.fetchall()
+        return [row["date"] for row in rows]
+    finally:
+        cursor.close()
+
 # Personalized errors
 class UserAlreadyExistsError(Exception):
     """Raised when there's already an account created with the e-mail informed"""
@@ -175,4 +272,8 @@ class CoordinatorDoesntExistError(Exception):
 
 class InstitutionDoesntExistError(Exception):
     """Raised when institution_id does not represent any institution"""
+    pass
+
+class UserNotFoundError(Exception):
+    """Raised when user is not founded"""
     pass
