@@ -13,7 +13,7 @@ jobs:
       - name: "Generate .env file from Single Secret"
         run: |
           DEST="/home/joao/actions-runner/_work/back-end/back-end/.env"
-          echo "${{ secrets.ENV_FILE }}" > $DEST
+          echo '${{ secrets.ENV_FILE }}' > $DEST
           chmod 600 $DEST
       
       - name: "Validate .env existence"
