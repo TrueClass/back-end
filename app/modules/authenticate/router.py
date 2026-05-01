@@ -4,8 +4,9 @@ from fastapi import APIRouter, Depends, HTTPException, Cookie, Response
 
 router = APIRouter(prefix="/authenticate", tags=["Autenticação"])
 
-@router.get("/",response_model= schemas.AuthenticateResponse, status_code=200)
+@router.get("/", response_model=schemas.AuthenticateResponse, status_code=200)
 async def authenticate_request( 
+    response: Response,
     refresh_token: str = Cookie(None), 
     cache = Depends(get_redis),
     db = Depends(get_db)
@@ -13,7 +14,15 @@ async def authenticate_request(
     try:
         new_access_token = await service.is_token_valid(refresh_token, cache, db)
         if(new_access_token):
-            return {"access_token" : new_access_token, "token_type" : "bearer" }
+            response.set_cookie(
+                key="access_token",
+                value=new_access_token,
+                httponly=True,
+                secure=True,
+                samesite="lax",
+                max_age=3600 # Tempo de vida em segundos (1 hora)
+            )
+        return { "message":"Authentication has been made successfully!"}
     except service.TokenNotRecieved:
         raise HTTPException(status_code=401, detail="Token wasn't informed on request.")
     except service.TokenNotActive:

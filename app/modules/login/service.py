@@ -56,7 +56,7 @@ def fetch_user_info(email:str, db) -> object:
     
     return user
 
-def create_access_token(user: object) -> object:
+def create_access_token(user: object) -> str:
     expire = int((datetime.now(timezone.utc) + timedelta(minutes=30)).timestamp())
     iat = int(datetime.now(timezone.utc).timestamp())
 
