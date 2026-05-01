@@ -10,13 +10,14 @@ jobs:
       - name: "Checkout code"
         uses: actions/checkout@v4
 
-      - name: "Validate Secrets"
+      - name: "Validate .env existence"
         run: |
-          if [ -z "${{ secrets.DATABASE_HOST }}" ]; then
-            echo "❌ ERRO: O segredo DATABASE_HOST está VAZIO ou não foi encontrado!"
+          if [ -s "/home/joao/actions-runner/_work/back-end/back-end/.env" ]; then
+            echo "✅ Arquivo .env gerado com sucesso e não está vazio!"
+          else
+            echo "❌ ERRO: O arquivo .env está vazio ou não foi criado."
             exit 1
           fi
-          echo "✅ Segredo encontrado, prosseguindo..."
 
       - name: "Generate .env file from Single Secret"
         run: |
