@@ -10,6 +10,14 @@ jobs:
       - name: "Checkout code"
         uses: actions/checkout@v4
 
+      - name: "Validate Secrets"
+        run: |
+          if [ -z "${{ secrets.DATABASE_HOST }}" ]; then
+            echo "❌ ERRO: O segredo DATABASE_HOST está VAZIO ou não foi encontrado!"
+            exit 1
+          fi
+          echo "✅ Segredo encontrado, prosseguindo..."
+
       - name: "Fix Permissions and Generate .env"
         run: |
           # Garante que estamos na pasta correta
