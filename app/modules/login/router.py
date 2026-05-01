@@ -11,6 +11,15 @@ async def login(response: Response, login_in: schemas.Login, db = Depends(get_db
         login_data = await service.authenticate_user(login_in, db, cache)
 
         response.set_cookie(
+            key="access_token",
+            value=login_data[0],
+            httponly=True,
+            secure=True,
+            samesite="lax",
+            max_age=3600 # Tempo de vida em segundos (1 hora)
+        )
+
+        response.set_cookie(
             key="refresh_token",
             value=login_data[1],
             httponly=True,
@@ -18,7 +27,7 @@ async def login(response: Response, login_in: schemas.Login, db = Depends(get_db
             samesite="lax",
             max_age=604800 # Tempo de vida em segundos (7 dias)
         )
-        
-        return {"access_token" : login_data[0], "token_type" : "bearer" }
+
+        return { "message" : "Login has been made successfully!"}
     except service.IncorrectUserOrPassword:
         raise HTTPException(status_code=401, detail="Usuário ou senha incorreta")

@@ -16,4 +16,4 @@ app.include_router(login_router)
 
 @app.get("/ping")
 def read_root():
-    return {"message": "Pongui"}
+    return {"message": "Pong"}

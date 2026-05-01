@@ -1,10 +1,5 @@
 from pydantic import BaseModel
 
-# Resposta ao POST
+# O que recebemos pelo POST
 class AuthenticateResponse(BaseModel):
-    access_token: str
-    token_type: str
-
-    model_config = {
-        "from_attributes": True
-    }
+    message: str
