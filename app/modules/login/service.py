@@ -23,10 +23,10 @@ async def authenticate_user(data: object, db, cache) -> object:
         Type.ID):
 
         access_token = create_access_token(user)
-        refresh_token, jti = create_refresh_token(user)
+        refresh_token, jti = create_refresh_token(data.email)
 
         #TrueClass:Refresh:User_id:Token
-        await cache.set(f"tc:ref:{user["email"]}:{jti}", "active", ex=604800)
+        await cache.set(f"tc:ref:{data.email}:{jti}", "active", ex=604800)
 
         return (access_token, refresh_token)
     
@@ -61,7 +61,7 @@ def create_access_token(user: object) -> str:
     iat = int(datetime.now(timezone.utc).timestamp())
 
     to_encode ={
-        "sub" : user["email"],
+        "sub" : user["id"],
         "role" : user["role"],
         "type" : "access",
         "exp" : expire,
@@ -71,12 +71,12 @@ def create_access_token(user: object) -> str:
     token = jwt.encode(to_encode, ACCESS_SECRET_KEY, algorithm="HS256")
     return token
 
-def create_refresh_token(user: object) -> object:
+def create_refresh_token(email: str) -> object:
     expire = int((datetime.now(timezone.utc) + timedelta(days=7)).timestamp())
     jti = str(uuid4())
 
     to_encode ={
-        "sub" : user["email"],
+        "sub" : email,
         "type" : "refresh",
         "jti" : jti,
         "exp" : expire
