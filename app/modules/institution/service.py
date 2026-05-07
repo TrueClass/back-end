@@ -42,8 +42,8 @@ def obtain_institution(db) -> list:
     try:
         cursor.execute(models.INSTITUTION_OBTAIN_QUERY)
         result = cursor.fetchall()
+        iteration = 0
         for institution in result:
-            iteration = 0
             emails_as_string = institution["emails"]
             institution["emails"] = [email.strip() for email in emails_as_string.split(",")]
             result[iteration] = institution
