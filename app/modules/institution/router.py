@@ -21,6 +21,14 @@ async def student_by_institution(institution_id: int, limit: int, page: int, db 
     result = service.get_student_by_institution(institution_id, limit, page, db)
     return { 'total': result[0], 'limit' : limit, 'page': page, 'students': result[1]}
 
+
+@router.post("/{institution_id}/student/link", response_model=schemas.StudentClassLinkResponse, status_code=201)
+async def link_student_class(student_in: schemas.StudentClassLink, db=Depends(get_db),
+                             payload=Depends(validate_access_token)):
+    new_link = service.link_class_student(payload.get("sub"), student_in.class_id, db)
+    return new_link
+
+
 @router.post("/{institution_id}/student", response_model=schemas.StudentCreateResponse, dependencies=[Depends(validate_professor)], status_code=201)
 async def create_student(institution_id: int, student_in: schemas.StudentCreate, db = Depends(get_db)):
     try:
@@ -49,21 +57,21 @@ async def create_professor(institution_id: int, professor_in: schemas.ProfessorC
         raise HTTPException(status_code=422, detail="Coordinator informed doesn't exist")
 
 @router.post("/{institution_id}/classes", response_model=schemas.ClassCreateResponse, status_code=201)
-async def create_class(institution_id: int, class_in: schemas.ClassCreate, db = Depends(get_db), payload=Depends(validate_access_token)):
-    email = payload.get("sub")
-    new_class = service.create_new_class(institution_id, class_in, email,db)
+async def create_class(class_in: schemas.ClassCreate, db = Depends(get_db), payload=Depends(validate_access_token)):
+    user_id = payload.get("sub")
+    new_class = service.create_new_class(class_in, user_id,db)
     return new_class
 
 @router.get("/{institution_id}/classes", response_model=schemas.ClassListResponse, status_code=200)
-async def get_class(institution_id: int, db = Depends(get_db), payload=Depends(validate_access_token)):
-    email = payload.get("sub")
+async def get_classes(db = Depends(get_db), payload=Depends(validate_access_token)):
+    user_id = payload.get("sub")
     role = payload.get("role")
-    result = service.get_classes(email, role, db)
+    result = service.get_classes(user_id, role, db)
     return {"classes": result}
 
 @router.get("/{institution_id}/classes/{class_id}/items", response_model=schemas.ClassDatesResponse, status_code=200)
-async def get_class_items(institution_id: int, class_id: int, db = Depends(get_db)):
-    result = service.get_class_itens(class_id, db)
+async def get_class_items(class_id: int, db = Depends(get_db), payload = Depends(validate_access_token)):
+    result = service.get_class_items(class_id, db)
     if not result:
         raise HTTPException(status_code=404, detail="No date found for this class")
     return {"dates": result}

@@ -3,6 +3,7 @@ from mysql.connector import errorcode
 from argon2 import PasswordHasher, Type
 from . import models
 from datetime import timedelta
+from fastapi import HTTPException
 
 def create_new_institution(data: object, db) -> object:
     """
@@ -72,6 +73,51 @@ def create_new_student(institution_id: int, data: object, db) -> object:
         elif err.errno == errorcode.ER_NO_REFERENCED_ROW_2:
             raise InstitutionDoesntExistError()
         raise err
+    finally:
+        cursor.close()
+
+
+def link_class_student(user_id, class_id, db):
+    cursor = db.cursor(dictionary=True)
+
+    try:
+
+        # validate if class exist
+        cursor.execute(models.VALIDATE_CLASS_ID_QUERY, (class_id,))
+
+        existing_class = cursor.fetchone()
+
+        if not existing_class:
+            raise HTTPException(
+                status_code=404,
+                detail="Class not found"
+            )
+
+        # validate if student is alredy linked
+        cursor.execute(models.VALIDATE_STUDENT_CLASS_LINK_QUERY, (user_id, class_id))
+        existing_link = cursor.fetchone()
+
+        if existing_link:
+            raise HTTPException(
+                status_code=409,
+                detail="Student already linked to this class"
+            )
+
+        # create link
+        values = (user_id, class_id)
+        cursor.execute(models.STUDENT_CLASS_LINK_QUERY, values)
+        db.commit()
+
+        return {
+            "id": cursor.lastrowid,
+            "linked": True
+        }
+
+    except HTTPException:
+        raise
+    except Exception:
+        db.rollback()
+        raise
     finally:
         cursor.close()
 
@@ -165,84 +211,68 @@ def get_professor_by_institution(institution_id: int, limit: int, page: int, db)
 
     return (total, professors)
 
-def calculate_dates(start_date, end_date, is_biweekly, biweekly_week=None) -> list:
-    dates = []
-    current = start_date
 
+def calculate_dates(start_date, end_date, is_biweekly, biweekly_week=None) -> list:
     all_weeks = []
+
+    # Weekly class
+    if not is_biweekly:
+        current = start_date
+        while start_date <= end_date:
+            all_weeks.append(current)
+            current += timedelta(days=7)
+        return all_weeks
+
+    # biweekly A
+    if biweekly_week == "A":
+        current = start_date
+    # biweekly B
+    elif biweekly_week == "B":
+        current = start_date + timedelta(days=7)
+    else:
+        raise ValueError("biweekly_week must be 'A' or 'B'")
 
     while current <= end_date:
         all_weeks.append(current)
-        current += timedelta(days=7)
+        current += timedelta(days=14)
 
-    if not is_biweekly:
-        return all_weeks
-
-    if biweekly_week == "A":
-        return [date for i, date in enumerate(all_weeks) if i % 2 == 0]
-    elif biweekly_week == "B":
-        return [date for i, date in enumerate(all_weeks) if i % 2 == 1]
+    return all_weeks
 
 
-def create_new_class(institution_id: int, data: object, email: str, db) -> object:
+def create_new_class(data: object, user_id: int, db) -> object:
     cursor = db.cursor(dictionary=True)
-
     try:
-        professor_id = get_user_id_by_email(email, "professor", db)
-
         dates = calculate_dates(
             data.start_date,
             data.end_date,
             data.is_biweekly,
             data.biweekly_week
         )
-
         biweekly = 1 if data.is_biweekly else 0
-
         values = (
             data.subject,
             biweekly,
             data.biweekly_week,
-            professor_id
+            user_id
         )
-
         cursor.execute(models.CLASS_INSERT_QUERY, values)
         class_id = cursor.lastrowid
 
-        for class_date in dates:
-            cursor.execute(models.CLASS_ITEM_INSERT_QUERY, (str(class_date), class_id))
+        values = [(str(class_date), class_id) for class_date in dates]
+        cursor.executemany(models.CLASS_ITEM_INSERT_QUERY, values)
 
         db.commit()
-
         return {"id": class_id, "subject": data.subject}
-
-    except Exception as e:
+    except Exception:
         db.rollback()
-        raise e
-
+        raise
     finally:
         cursor.close()
 
 
-def get_user_id_by_email(email: str, role: str, db):
+def get_classes(user_id: int, role: str, db):
     cursor = db.cursor(dictionary=True)
     try:
-        if role == "professor":
-            cursor.execute(models.GET_ID_BY_EMAIL_PROFESSOR_QUERY, (email,))
-        else:
-            cursor.execute(models.GET_ID_BY_EMAIL_STUDENT_QUERY, (email,))
-        row = cursor.fetchone()
-        if row is None:
-            raise UserNotFoundError()
-        return row["id"]
-    finally:
-        cursor.close()
-
-
-def get_classes(email: str, role: str, db):
-    cursor = db.cursor(dictionary=True)
-    try:
-        user_id = get_user_id_by_email(email, role, db)
         if role == "student":
             cursor.execute(models.CLASS_GET_BY_STUDENT_QUERY, (user_id,))
         else:
@@ -252,10 +282,11 @@ def get_classes(email: str, role: str, db):
     finally:
         cursor.close()
 
-def get_class_itens(class_id: int, db):
+
+def get_class_items(class_id: int, db):
     cursor = db.cursor(dictionary=True)
     try:
-        cursor.execute(models.CLASS_ITENS_GET_QUERY, (class_id,))
+        cursor.execute(models.CLASS_ITEMS_GET_QUERY, (class_id,))
         rows = cursor.fetchall()
         return [row["date"] for row in rows]
     finally:

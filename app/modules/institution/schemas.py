@@ -33,6 +33,14 @@ class StudentCreateResponse(BaseModel):
     model_config = {
         "from_attributes": True
     }
+# --- Post students --
+class StudentClassLink(BaseModel):
+    class_id: int
+
+class StudentClassLinkResponse(BaseModel):
+    id: int
+    linked: bool
+
 
 # --- GET students ---
 class StudentItem(BaseModel):
