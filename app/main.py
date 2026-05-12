@@ -7,7 +7,7 @@ from app.modules.login.router import router as login_router
 
 app = FastAPI(title="TrueClass API", lifespan=lifespan, redirect_slashes=False)
 
-app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
+app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="192.168.15.124")
 
 # Incluindo as rotas que criamos
 app.include_router(authenticate_router)

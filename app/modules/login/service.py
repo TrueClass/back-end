@@ -1,7 +1,7 @@
 from jose import jwt
 from argon2 import verify_password, Type
 from datetime import datetime, timedelta, timezone
-from .models import LOGIN_SELECT_PROFESSOR_QUERY, LOGIN_SELECT_STUDENT_QUERY
+from .models import LOGIN_SELECT_USER_QUERY
 from dotenv import load_dotenv
 from uuid import uuid4
 import os
@@ -35,25 +35,13 @@ async def authenticate_user(data: object, db, cache) -> object:
 
 def fetch_user_info(email:str, db) -> object:
     cursor = db.cursor(dictionary=True)
-    values = (email,)
 
-    # Search for a professor
-    cursor.execute(LOGIN_SELECT_PROFESSOR_QUERY,values)
+    cursor.execute(LOGIN_SELECT_USER_QUERY, (email,))
     user = cursor.fetchone()
-    user_role = "professor"
-    
-    # If it isn't a professor, search for a student
-    if not user:
-        cursor.execute(LOGIN_SELECT_STUDENT_QUERY, values)
-        user = cursor.fetchone()
-        user_role = "student"
-    
-    # If the user doesn't exist
+
     if not user:
         raise IncorrectUserOrPassword()
-    
-    user.update({"role" : user_role})
-    
+
     return user
 
 def create_access_token(user: object) -> str:

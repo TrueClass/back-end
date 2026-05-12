@@ -1,4 +1,3 @@
-from datetime import datetime, timezone
 from fastapi import Cookie, HTTPException
 from typing import Annotated
 from jose import jwt, JWTError
@@ -21,6 +20,13 @@ async def validate_access_token(access_token: Annotated[str | None, Cookie()] = 
         raise HTTPException(status_code=401, detail="Token expirado")
 
 async def validate_professor(access_token: Annotated[str | None, Cookie()] = None):
-    payload = jwt.decode(access_token, ACCESS_SECRET_KEY, algorithms=["HS256"])
-    if(payload.get("role") != "professor"):
+    if access_token is None:
+        raise HTTPException(status_code=401, detail="Token de acesso não informado")
+    try:
+        payload = jwt.decode(access_token, ACCESS_SECRET_KEY, algorithms=["HS256"])
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expirado")
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Token inválido")
+    if payload.get("role") != "professor":
         raise HTTPException(status_code=403, detail="Usuário não autorizado")

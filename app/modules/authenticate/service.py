@@ -1,5 +1,5 @@
 from ..login.service import fetch_user_info, create_access_token
-from jose import jwt
+from jose import jwt, JWTError
 from dotenv import load_dotenv
 import os
 
@@ -13,22 +13,31 @@ async def is_token_valid(refresh_token, cache, db):
 
     try:
         payload = jwt.decode(refresh_token, REFRESH_SECRET_KEY, algorithms=["HS256"])
-        jti = payload.get("jti")
-        user_email = payload.get("sub")
-
-        # 2. Verifica no Redis se o JTI ainda é válido (não foi deslogado)
-        status = await cache.get(f"tc:ref:{user_email}:{jti}")
-        
-        if status != "active":
-            raise TokenNotActive()
-        
-        user = fetch_user_info(user_email, db)
-        new_access_token = create_access_token(user)
-
-        # Se chegou aqui, retorna 200 OK e o Nginx libera o acesso
-        return new_access_token # Response(status_code=200)
-    except:
+    except JWTError:
         raise InvalidOrInaccessibleToken()
+
+    jti = payload.get("jti")
+    user_email = payload.get("sub")
+
+    status = await cache.get(f"tc:ref:{user_email}:{jti}")
+    if status != "active":
+        raise TokenNotActive()
+
+    user = fetch_user_info(user_email, db)
+    return create_access_token(user)
+
+async def logout(refresh_token, cache):
+    if not refresh_token:
+        raise TokenNotRecieved()
+
+    try:
+        payload = jwt.decode(refresh_token, REFRESH_SECRET_KEY, algorithms=["HS256"])
+    except JWTError:
+        raise InvalidOrInaccessibleToken()
+
+    jti = payload.get("jti")
+    user_email = payload.get("sub")
+    await cache.delete(f"tc:ref:{user_email}:{jti}")
  
 class TokenNotRecieved(Exception):
     """Raised when there's not an token in the request"""

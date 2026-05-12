@@ -3,6 +3,14 @@ from mysql.connector import errorcode
 from argon2 import PasswordHasher, Type
 from . import models
 
+password_hasher = PasswordHasher(
+    memory_cost=65536,
+    time_cost=4,
+    parallelism=2,
+    hash_len=32,
+    type=Type.ID
+)
+
 def create_new_institution(data: object, db) -> object:
     """
     Consume a new student info sent from a POST API request and store it on mySQL, iterate through emails recieved and insert them on database.
@@ -24,8 +32,6 @@ def create_new_institution(data: object, db) -> object:
             value = (institution_id, email)
             value_list.append(value)
         
-        print(value_list)
-
         cursor.executemany(models.INSTITUTION_EMAIL_INSERT_QUERY, value_list)
         db.commit()
 
@@ -45,7 +51,7 @@ def obtain_institution(db) -> list:
         iteration = 0
         for institution in result:
             emails_as_string = institution["emails"]
-            institution["emails"] = [email.strip() for email in emails_as_string.split(",")]
+            institution["emails"] = emails_as_string.split("|")
             result[iteration] = institution
             iteration = iteration + 1
         return result
@@ -56,7 +62,7 @@ def create_new_student(institution_id: int, data: object, db) -> object:
     """
     Consume a new student info sent from a POST API request, prepare it, store it on mySQL and return a message.
     """
-    hashed_password = passwordHash(data.password)
+    hashed_password = password_hasher.hash(data.password)
 
     cursor = db.cursor()
     values = (institution_id, data.email, hashed_password)
@@ -73,20 +79,6 @@ def create_new_student(institution_id: int, data: object, db) -> object:
         raise err
     finally:
         cursor.close()
-
-def passwordHash(password):
-    """
-    Hash the password provided by the student by using argon2.
-    """
-    ph = PasswordHasher(
-        memory_cost=65536,
-        time_cost=4,
-        parallelism=2,
-        hash_len=32,
-        type=Type.ID
-    )
-
-    return ph.hash(password)
 
 def get_student_by_institution(institution_id: int, limit: int, page: int, db):
     """
@@ -109,38 +101,29 @@ def create_new_professor(institution_id: int, data: object, db):
     """
     cursor = db.cursor(dictionary=True)
 
-    #Transforms boolean to int
-    if data.is_coordinator:
-        tinyint_is_coordinator = 1
-    else:
-        tinyint_is_coordinator = 0
-
-    #If there's an coordination_id informed
+    # Validate coordinator_id before hashing the password to fail fast
     if data.coordinator_id:
-        #Check if id informed is actually an coordinator
         cursor.execute(models.CHECK_COORDINATOR_QUERY, (data.coordinator_id,))
-        is_coodinator_valid = cursor.fetchone()
-
-        if not is_coodinator_valid:
+        if not cursor.fetchone():
             cursor.close()
             raise CoordinatorDoesntExistError()
-    
-    #Sets the rest of the informations
-    hashed_password = passwordHash(data.password)
-    values = (institution_id, data.name, data.email, hashed_password, tinyint_is_coordinator)
-    
+
+    hashed_password = password_hasher.hash(data.password)
+
     try:
-        #Inserting professor on database
-        cursor.execute(models.PROFESSOR_INSERT_QUERY, values)
+        # Insert auth data into TC.users, then profile data into TC.professor_profile
+        cursor.execute(models.PROFESSOR_INSERT_QUERY, (institution_id, data.email, hashed_password))
         db.commit()
         professor_id = cursor.lastrowid
 
+        cursor.execute(models.PROFESSOR_PROFILE_INSERT_QUERY, (professor_id, data.name, int(data.is_coordinator)))
+        db.commit()
+
         if data.coordinator_id:
-            #Inserting coordinator_professor relation on database 
-            cursor.execute(models.COORDINATOR_PROFESSOR_INSERT_QUERY,(professor_id, data.coordinator_id))
+            cursor.execute(models.COORDINATOR_PROFESSOR_INSERT_QUERY, (professor_id, data.coordinator_id))
             db.commit()
 
-        return { "id": professor_id }
+        return {"id": professor_id}
     except mysql.connector.Error as err:
         if err.errno == errorcode.ER_DUP_ENTRY:
             raise UserAlreadyExistsError()
