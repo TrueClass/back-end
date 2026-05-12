@@ -36,8 +36,11 @@ async def authenticate_user(data: object, db, cache) -> object:
 def fetch_user_info(email:str, db) -> object:
     cursor = db.cursor(dictionary=True)
 
-    cursor.execute(LOGIN_SELECT_USER_QUERY, (email,))
-    user = cursor.fetchone()
+    try:
+        cursor.execute(LOGIN_SELECT_USER_QUERY, (email,))
+        user = cursor.fetchone()
+    finally:
+        cursor.close()
 
     if not user:
         raise IncorrectUserOrPassword()

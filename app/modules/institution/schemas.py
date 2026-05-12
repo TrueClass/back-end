@@ -62,7 +62,7 @@ class ProfessorItem(BaseModel):
     rating: float | None
     email: EmailStr
     profile_picture: str | None
-    is_coordinator: int
+    is_coordinator: bool
 
 class ProfessorByInstitution(BaseModel):
     total: int = Field(description="Total amount of entries returned to this institution")

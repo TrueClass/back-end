@@ -87,13 +87,16 @@ def get_student_by_institution(institution_id: int, limit: int, page: int, db):
     cursor = db.cursor(dictionary=True)
     values = (institution_id, limit, limit*(page-1))
 
-    cursor.execute(models.STUDENT_SELECT_QUERY,values)
-    students = cursor.fetchall()
+    try:
+        cursor.execute(models.STUDENT_SELECT_QUERY,values)
+        students = cursor.fetchall()
 
-    cursor.execute(models.STUDENT_COUNT_QUERY,(institution_id,))
-    total = cursor.fetchone()['count']
+        cursor.execute(models.STUDENT_COUNT_QUERY,(institution_id,))
+        total = cursor.fetchone()['count']
 
-    return (total, students)
+        return (total, students)
+    finally:
+        cursor.close()
 
 def create_new_professor(institution_id: int, data: object, db):
     """
@@ -138,14 +141,18 @@ def get_professor_by_institution(institution_id: int, limit: int, page: int, db)
     Get professors based on their institution_id. Limit the result of the query based on limit and page.
     """
     cursor = db.cursor(dictionary=True)
-    cursor.execute(models.PROFESSOR_COUNT_QUERY, (institution_id,))
-    total = cursor.fetchone()['count']
 
-    values = (institution_id, limit, limit*(page-1))
-    cursor.execute(models.PROFESSOR_GET_QUERY, values)
-    professors = cursor.fetchall()
+    try:
+        cursor.execute(models.PROFESSOR_COUNT_QUERY, (institution_id,))
+        total = cursor.fetchone()['count']
 
-    return (total, professors)
+        values = (institution_id, limit, limit*(page-1))
+        cursor.execute(models.PROFESSOR_GET_QUERY, values)
+        professors = cursor.fetchall()
+
+        return (total, professors)
+    finally:
+        cursor.close()
 
 # Personalized errors
 class UserAlreadyExistsError(Exception):
