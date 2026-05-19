@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Cookie, Response
 
 router = APIRouter(prefix="/authenticate", tags=["Autenticação"])
 
-@router.get("/", response_model=schemas.AuthenticateResponse, status_code=200)
+@router.get("", response_model=schemas.AuthenticateResponse, status_code=200)
 async def authenticate_request(
     response: Response,
     refresh_token: str = Cookie(None),
@@ -30,7 +30,7 @@ async def authenticate_request(
     except service.InvalidOrInaccessibleToken:
         raise HTTPException(status_code=401, detail="Token is unreachable or doesn't exist")
 
-@router.delete("/", response_model=schemas.AuthenticateResponse, status_code=200)
+@router.delete("", response_model=schemas.AuthenticateResponse, status_code=200)
 async def logout_request(
     response: Response,
     refresh_token: str = Cookie(None),
