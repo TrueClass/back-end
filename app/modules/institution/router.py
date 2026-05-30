@@ -5,6 +5,7 @@ from .institution import service as institution_service
 from .institution import schemas as institution_schemas
 from .student.router import router as student_router
 from .professor.router import router as professor_router
+from .classes.router import router as  classes_router
 
 router = APIRouter(prefix="/institution", tags=["Instituição"])
 
@@ -19,3 +20,4 @@ async def create_institution(institution_in: institution_schemas.InstitutionCrea
 
 router.include_router(student_router)
 router.include_router(professor_router)
+router.include_router(classes_router)

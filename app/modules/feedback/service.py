@@ -47,7 +47,7 @@ class ClassItemNotFoundError(Exception):
     pass
 
 class StudentNotEnrolledError(Exception):
-    """Raised when the student is not enrolled in the class that contains the class_item"""
+    """Raised when the student is not enrolled in the classes that contains the class_item"""
     pass
 
 class AlreadyRatedError(Exception):

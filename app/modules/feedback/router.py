@@ -19,9 +19,9 @@ async def submit_rating(
     except service.ClassItemNotFoundError:
         raise HTTPException(status_code=404, detail="Class item not found")
     except service.StudentNotEnrolledError:
-        raise HTTPException(status_code=403, detail="Student is not enrolled in this class")
+        raise HTTPException(status_code=403, detail="Student is not enrolled in this classes")
     except service.AlreadyRatedError:
-        raise HTTPException(status_code=409, detail="Student has already rated this class item")
+        raise HTTPException(status_code=409, detail="Student has already rated this classes item")
 
 @router.get("/{class_item_id}", response_model=schemas.RatingsByClassItem, dependencies=[Depends(validate_access_token)], status_code=200)
 async def get_ratings(
