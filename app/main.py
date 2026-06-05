@@ -1,5 +1,4 @@
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 from app.core.database import lifespan
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 from app.modules.authenticate.router import router as authenticate_router
@@ -10,13 +9,6 @@ from app.modules.feedback.router import router as feedback_router
 app = FastAPI(title="TrueClass API", lifespan=lifespan, redirect_slashes=False)
 
 app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="192.168.15.124")
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 # Incluindo as rotas que criamos
 app.include_router(authenticate_router)
