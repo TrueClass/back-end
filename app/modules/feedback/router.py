@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from app.core.database import get_db
 from app.core.access_validation import validate_access_token, validate_student
 from . import service, schemas
@@ -26,9 +26,33 @@ async def submit_rating(
 @router.get("/{class_item_id}", response_model=schemas.RatingsByClassItem, dependencies=[Depends(validate_access_token)], status_code=200)
 async def get_ratings(
     class_item_id: int,
-    limit: int,
-    page: int,
+    limit: int = Query(10, ge=1),
+    page: int = Query(1, ge=1),
     db=Depends(get_db)
 ):
     result = service.get_ratings_by_class_item(class_item_id, limit, page, db)
     return {"total": result[0], "limit": limit, "page": page, "ratings": result[1]}
+
+@router.post("/{feedback_id}/boost", response_model=schemas.BoostResponse, status_code=201)
+async def add_boost(
+    feedback_id: int,
+    token_data: dict = Depends(validate_access_token),
+    db=Depends(get_db)
+):
+    try:
+        return service.add_boost(feedback_id, token_data["sub"], db)
+    except service.RatingNotFoundError:
+        raise HTTPException(status_code=404, detail="Feedback item not found")
+    except service.AlreadyBoostedError:
+        raise HTTPException(status_code=409, detail="User already boosted this item")
+
+@router.delete("/{feedback_id}/boost", response_model=schemas.BoostResponse, status_code=200)
+async def remove_boost(
+    feedback_id: int,
+    token_data: dict = Depends(validate_access_token),
+    db=Depends(get_db)
+):
+    try:
+        return service.remove_boost(feedback_id, token_data["sub"], db)
+    except service.BoostNotFoundError:
+        raise HTTPException(status_code=404, detail="User has not boosted this item")
