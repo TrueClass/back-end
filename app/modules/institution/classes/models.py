@@ -2,7 +2,7 @@ CLASS_INSERT_QUERY = "INSERT INTO TC.class (subject, professor_id) VALUES (%s, %
 CLASS_ITEM_INSERT_QUERY = "INSERT INTO TC.class_items (created_at, class_id, title) VALUES (%s, %s, %s)"
 CLASS_GET_BY_STUDENT_QUERY = "SELECT c.id, c.subject, p.name AS professor_name FROM TC.class c JOIN TC.professor p ON p.id = c.professor_id JOIN TC.student_class sc ON sc.class_id = c.id WHERE sc.student_id = %s"
 CLASS_GET_BY_PROFESSOR_QUERY = "SELECT c.id, c.subject FROM TC.class c WHERE c.professor_id = %s"
-CLASS_ITEMS_GET_QUERY = "SELECT ci.created_at, ci.title FROM TC.class_items ci WHERE ci.class_id = %s"
+CLASS_ITEMS_GET_QUERY = "SELECT ci.created_at, ci.title FROM TC.class_items ci WHERE ci.class_id = %s ORDER BY ci.created_at"
 VALIDATE_STUDENT_CLASS_LINK_QUERY = "SELECT id FROM TC.student_class WHERE student_id = %s AND class_id = %s"
 VALIDATE_CLASS_ID_QUERY = "SELECT id FROM TC.class WHERE id = %s"
 STUDENT_CLASS_LINK_QUERY = "INSERT INTO TC.student_class (student_id, class_id) VALUES (%s, %s)"

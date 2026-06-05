@@ -1,14 +1,18 @@
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, Field
 from datetime import date
+from typing import Literal
 
 # --- POST Class ---
-class ClassItemInput(BaseModel):
-    date: date
-    title: str = Field(max_length=100)
-
 class ClassCreate(BaseModel):
     subject: str = Field(max_length=70)
-    items: list[ClassItemInput]
+    start_date: date
+    end_date: date
+    frequency: Literal["weekly", "biweekly_a", "biweekly_b"]
+    titles: list[str] = Field(min_length=1)
+
+class EnrollResponse(BaseModel):
+    id: int
+    linked: bool
 
 class ClassCreateResponse(BaseModel):
     id: int
@@ -26,8 +30,9 @@ class ClassListResponse(BaseModel):
 
 # --- GET Class Items ---
 class ClassDateItem(BaseModel):
-    created_at: str
+    created_at: date
     title: str
 
 class ClassDatesResponse(BaseModel):
     dates: list[ClassDateItem]
+
