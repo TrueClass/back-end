@@ -16,7 +16,7 @@ class RatingItem(BaseModel):
     created_at: datetime
 
 class RatingsByClassItem(BaseModel):
-    total: int = Field(description="Total amount of ratings for this class item")
+    total: int = Field(description="Total amount of ratings for this classes item")
     limit: int = Field(description="Amount of entries to be returned")
     page: int = Field(description="Determines the offset of the query. Determined by the limit: limit*(page-1).")
     ratings: list[RatingItem]
