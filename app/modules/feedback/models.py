@@ -42,3 +42,17 @@ RATINGS_COUNT = """
     SELECT COUNT(*) as count FROM TC.rating
     WHERE class_item_id = %s AND active = 1
 """
+
+CHECK_RATING_EXISTS = "SELECT id FROM TC.rating WHERE id = %s AND active = 1"
+
+CHECK_BOOST_EXISTS = "SELECT id FROM TC.rating_boost WHERE student_id = %s AND rating_id = %s"
+
+INSERT_BOOST = "INSERT INTO TC.rating_boost (student_id, rating_id) VALUES (%s, %s)"
+
+DELETE_BOOST = "DELETE FROM TC.rating_boost WHERE student_id = %s AND rating_id = %s"
+
+INCREMENT_BOOSTS = "UPDATE TC.rating SET boosts = boosts + 1 WHERE id = %s"
+
+DECREMENT_BOOSTS = "UPDATE TC.rating SET boosts = boosts - 1 WHERE id = %s"
+
+GET_BOOST_COUNT = "SELECT boosts FROM TC.rating WHERE id = %s"

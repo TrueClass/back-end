@@ -20,3 +20,6 @@ class RatingsByClassItem(BaseModel):
     limit: int = Field(description="Amount of entries to be returned")
     page: int = Field(description="Determines the offset of the query. Determined by the limit: limit*(page-1).")
     ratings: list[RatingItem]
+
+class BoostResponse(BaseModel):
+    boosts: int
