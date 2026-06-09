@@ -15,7 +15,7 @@ async def login(response: Response, login_in: schemas.Login, db = Depends(get_db
             value=login_data[0],
             httponly=True,
             secure=True,
-            samesite="lax",
+            samesite="none",
             max_age=3600 # Tempo de vida em segundos (1 hora)
         )
 
@@ -24,7 +24,7 @@ async def login(response: Response, login_in: schemas.Login, db = Depends(get_db
             value=login_data[1],
             httponly=True,
             secure=True,
-            samesite="lax",
+            samesite="none",
             max_age=604800 # Tempo de vida em segundos (7 dias)
         )
 
