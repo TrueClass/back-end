@@ -64,7 +64,7 @@ def create_new_class(data, user_id, db):
         if not dates:
             raise HTTPException(status_code=400, detail="No class dates generated for the given range and frequency")
 
-        cursor.execute(models.CLASS_INSERT_QUERY, (data.subject, user_id))
+        cursor.execute(models.CLASS_INSERT_QUERY, (data.subject, user_id, data.class_name))
         class_id = cursor.lastrowid
 
         titles = data.titles[:len(dates)]
@@ -75,7 +75,7 @@ def create_new_class(data, user_id, db):
         cursor.executemany(models.CLASS_ITEM_INSERT_QUERY, values)
 
         db.commit()
-        return {"id": class_id, "subject": data.subject}
+        return {"id": class_id, "subject": data.subject, "class": data.class_name}
     except HTTPException:
         raise
     except Exception:

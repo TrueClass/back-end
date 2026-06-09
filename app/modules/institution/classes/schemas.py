@@ -5,6 +5,7 @@ from typing import Literal
 # --- POST Class ---
 class ClassCreate(BaseModel):
     subject: str = Field(max_length=70)
+    class_name: str = Field(max_length=70)
     start_date: date
     end_date: date
     frequency: Literal["weekly", "biweekly_a", "biweekly_b"]
