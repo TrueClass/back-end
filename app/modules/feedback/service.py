@@ -1,27 +1,23 @@
-from app.modules.login.service import fetch_user_info
 from . import models
 
-def submit_rating(class_item_id: int, student_email: str, data: object, db):
+def submit_rating(class_item_id: int, user_id: int, data: object, db):
     cursor = db.cursor(dictionary=True)
 
     try:
-        student = fetch_user_info(student_email, db)
-        student_id = student["id"]
-
         cursor.execute(models.CHECK_CLASS_ITEM_EXISTS, (class_item_id,))
         class_item = cursor.fetchone()
         if not class_item:
             raise ClassItemNotFoundError()
 
-        cursor.execute(models.CHECK_STUDENT_ENROLLED, (student_id, class_item_id))
+        cursor.execute(models.CHECK_STUDENT_ENROLLED, (user_id, class_item_id))
         if not cursor.fetchone():
             raise StudentNotEnrolledError()
 
-        cursor.execute(models.CHECK_ALREADY_RATED, (student_id, class_item_id))
+        cursor.execute(models.CHECK_ALREADY_RATED, (user_id, class_item_id))
         if cursor.fetchone():
             raise AlreadyRatedError()
 
-        cursor.execute(models.RATING_INSERT, (student_id, class_item_id, data.content, data.value))
+        cursor.execute(models.RATING_INSERT, (user_id, class_item_id, data.content, data.value))
         db.commit()
 
         return {"id": cursor.lastrowid}
@@ -42,11 +38,9 @@ def get_ratings_by_class_item(class_item_id: int, limit: int, page: int, db):
     finally:
         cursor.close()
 
-def add_boost(feedback_id: int, user_email: str, db):
+def add_boost(feedback_id: int, user_id: int, db):
     cursor = db.cursor(dictionary=True)
     try:
-        user_id = fetch_user_info(user_email, db)["id"]
-
         cursor.execute(models.CHECK_RATING_EXISTS, (feedback_id,))
         if not cursor.fetchone():
             raise RatingNotFoundError()
@@ -64,11 +58,9 @@ def add_boost(feedback_id: int, user_email: str, db):
     finally:
         cursor.close()
 
-def remove_boost(feedback_id: int, user_email: str, db):
+def remove_boost(feedback_id: int, user_id: int, db):
     cursor = db.cursor(dictionary=True)
     try:
-        user_id = fetch_user_info(user_email, db)["id"]
-
         cursor.execute(models.CHECK_BOOST_EXISTS, (user_id, feedback_id))
         if not cursor.fetchone():
             raise BoostNotFoundError()

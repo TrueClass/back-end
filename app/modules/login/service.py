@@ -1,7 +1,7 @@
 from jose import jwt
 from argon2 import verify_password, Type
 from datetime import datetime, timedelta, timezone
-from .models import LOGIN_SELECT_USER_QUERY
+from .models import LOGIN_SELECT_USER_QUERY, LOGIN_SELECT_USER_BY_ID_QUERY
 from dotenv import load_dotenv
 from uuid import uuid4
 import os
@@ -26,7 +26,7 @@ async def authenticate_user(data: object, db, cache) -> object:
         refresh_token, jti = create_refresh_token(user)
 
         #TrueClass:Refresh:User_id:Token
-        await cache.set(f"tc:ref:{user["email"]}:{jti}", "active", ex=604800)
+        await cache.set(f"tc:ref:{user["id"]}:{jti}", "active", ex=604800)
 
         return (access_token, refresh_token)
     
@@ -47,12 +47,26 @@ def fetch_user_info(email:str, db) -> object:
 
     return user
 
+def fetch_user_by_id(user_id: int, db) -> object:
+    cursor = db.cursor(dictionary=True)
+
+    try:
+        cursor.execute(LOGIN_SELECT_USER_BY_ID_QUERY, (user_id,))
+        user = cursor.fetchone()
+    finally:
+        cursor.close()
+
+    if not user:
+        raise IncorrectUserOrPassword()
+
+    return user
+
 def create_access_token(user: object) -> str:
     expire = int((datetime.now(timezone.utc) + timedelta(minutes=30)).timestamp())
     iat = int(datetime.now(timezone.utc).timestamp())
 
     to_encode ={
-        "sub" : user["email"],
+        "sub" : user["id"],
         "role" : user["role"],
         "type" : "access",
         "exp" : expire,
@@ -67,7 +81,7 @@ def create_refresh_token(user: object) -> object:
     jti = str(uuid4())
 
     to_encode ={
-        "sub" : user["email"],
+        "sub" : user["id"],
         "type" : "refresh",
         "jti" : jti,
         "exp" : expire
