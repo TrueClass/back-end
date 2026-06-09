@@ -1,4 +1,4 @@
-from ..login.service import fetch_user_info, create_access_token
+from ..login.service import fetch_user_by_id, create_access_token
 from jose import jwt, JWTError
 from dotenv import load_dotenv
 import os
@@ -17,13 +17,13 @@ async def is_token_valid(refresh_token, cache, db):
         raise InvalidOrInaccessibleToken()
 
     jti = payload.get("jti")
-    user_email = payload.get("sub")
+    user_id = payload.get("sub")
 
-    status = await cache.get(f"tc:ref:{user_email}:{jti}")
+    status = await cache.get(f"tc:ref:{user_id}:{jti}")
     if status != "active":
         raise TokenNotActive()
 
-    user = fetch_user_info(user_email, db)
+    user = fetch_user_by_id(user_id, db)
     return create_access_token(user)
 
 async def logout(refresh_token, cache):
@@ -36,8 +36,8 @@ async def logout(refresh_token, cache):
         raise InvalidOrInaccessibleToken()
 
     jti = payload.get("jti")
-    user_email = payload.get("sub")
-    await cache.delete(f"tc:ref:{user_email}:{jti}")
+    user_id = payload.get("sub")
+    await cache.delete(f"tc:ref:{user_id}:{jti}")
  
 class TokenNotRecieved(Exception):
     """Raised when there's not an token in the request"""
