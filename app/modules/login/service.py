@@ -66,7 +66,7 @@ def create_access_token(user: object) -> str:
     iat = int(datetime.now(timezone.utc).timestamp())
 
     to_encode ={
-        "sub" : user["id"],
+        "sub" : str(user["id"]),
         "role" : user["role"],
         "type" : "access",
         "exp" : expire,
@@ -81,7 +81,7 @@ def create_refresh_token(user: object) -> object:
     jti = str(uuid4())
 
     to_encode ={
-        "sub" : user["id"],
+        "sub" : str(user["id"]),
         "type" : "refresh",
         "jti" : jti,
         "exp" : expire
