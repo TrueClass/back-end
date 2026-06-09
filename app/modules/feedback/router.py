@@ -14,7 +14,7 @@ async def submit_rating(
     db=Depends(get_db)
 ):
     try:
-        result = service.submit_rating(class_item_id, token_data["sub"], rating_in, db)
+        result = service.submit_rating(class_item_id, int(token_data["sub"]), rating_in, db)
         return result
     except service.ClassItemNotFoundError:
         raise HTTPException(status_code=404, detail="Class item not found")
@@ -40,7 +40,7 @@ async def add_boost(
     db=Depends(get_db)
 ):
     try:
-        return service.add_boost(feedback_id, token_data["sub"], db)
+        return service.add_boost(feedback_id, int(token_data["sub"]), db)
     except service.RatingNotFoundError:
         raise HTTPException(status_code=404, detail="Feedback item not found")
     except service.AlreadyBoostedError:
@@ -53,6 +53,6 @@ async def remove_boost(
     db=Depends(get_db)
 ):
     try:
-        return service.remove_boost(feedback_id, token_data["sub"], db)
+        return service.remove_boost(feedback_id, int(token_data["sub"]), db)
     except service.BoostNotFoundError:
         raise HTTPException(status_code=404, detail="User has not boosted this item")

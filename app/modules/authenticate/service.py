@@ -23,7 +23,7 @@ async def is_token_valid(refresh_token, cache, db):
     if status != "active":
         raise TokenNotActive()
 
-    user = fetch_user_by_id(user_id, db)
+    user = fetch_user_by_id(int(user_id), db)
     return create_access_token(user)
 
 async def logout(refresh_token, cache):
