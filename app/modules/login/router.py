@@ -16,7 +16,7 @@ async def login(response: Response, login_in: schemas.Login, db = Depends(get_db
             httponly=True,
             secure=True,
             samesite="none",
-            max_age=3600 # Tempo de vida em segundos (1 hora)
+            max_age=1800 # Tempo de vida em segundos (30 minutos)
         )
 
         response.set_cookie(

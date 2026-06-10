@@ -19,8 +19,8 @@ async def authenticate_request(
                 value=new_access_token,
                 httponly=True,
                 secure=True,
-                samesite="lax",
-                max_age=3600 # Tempo de vida em segundos (1 hora)
+                samesite="none",
+                max_age=1800 # Tempo de vida em segundos (30 minutos)
             )
         return { "message":"Authentication has been made successfully!"}
     except service.TokenNotRecieved:
