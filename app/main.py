@@ -5,6 +5,7 @@ from app.modules.authenticate.router import router as authenticate_router
 from app.modules.institution.router import router as institution_router
 from app.modules.login.router import router as login_router
 from app.modules.feedback.router import router as feedback_router
+from app.modules.me.router import router as me_router
 
 app = FastAPI(title="TrueClass API", lifespan=lifespan, redirect_slashes=False)
 
@@ -15,6 +16,7 @@ app.include_router(authenticate_router)
 app.include_router(institution_router)
 app.include_router(login_router)
 app.include_router(feedback_router)
+app.include_router(me_router)
 
 @app.get("/ping")
 def read_root():
