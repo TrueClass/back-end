@@ -23,6 +23,7 @@ class ClassCreateResponse(BaseModel):
 # --- GET Classes ---
 class ClassListItem(BaseModel):
     id: int
+    class_: str = Field(alias='class')
     subject: str
     professor_name: str | None = None
 
@@ -31,6 +32,7 @@ class ClassListResponse(BaseModel):
 
 # --- GET Class Items ---
 class ClassDateItem(BaseModel):
+    id: int
     created_at: date
     title: str
 
