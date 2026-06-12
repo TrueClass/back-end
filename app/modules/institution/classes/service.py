@@ -107,6 +107,6 @@ def get_class_items(class_id, db):
     cursor = db.cursor(dictionary=True)
     try:
         cursor.execute(models.CLASS_ITEMS_GET_QUERY, (class_id,))
-        return [{"created_at": row["created_at"], "title": row["title"]} for row in cursor.fetchall()]
+        return [{"id": row["id"], "created_at": row["created_at"], "title": row["title"]} for row in cursor.fetchall()]
     finally:
         cursor.close()
