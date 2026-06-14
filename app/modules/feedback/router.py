@@ -16,6 +16,8 @@ async def submit_rating(
     try:
         result = service.submit_rating(class_item_id, int(token_data["sub"]), rating_in, db)
         return result
+    except service.ClassItemIsNotValid:
+        raise HTTPException(status_code=422, detail="Class item date not available for feedbacks")
     except service.ClassItemNotFoundError:
         raise HTTPException(status_code=404, detail="Class item not found")
     except service.StudentNotEnrolledError:
