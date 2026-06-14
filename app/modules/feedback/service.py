@@ -1,4 +1,5 @@
 from . import models
+from .Filter.Filter import filter_message
 from datetime import date
 
 def submit_rating(class_item_id: int, user_id: int, data: object, db):
@@ -11,7 +12,7 @@ def submit_rating(class_item_id: int, user_id: int, data: object, db):
 
         if not class_item.get("is_valid"):
             raise ClassItemIsNotValid()
-
+        
         if not class_item:
             raise ClassItemNotFoundError()
 
@@ -22,6 +23,11 @@ def submit_rating(class_item_id: int, user_id: int, data: object, db):
         cursor.execute(models.CHECK_ALREADY_RATED, (user_id, class_item_id))
         if cursor.fetchone():
             raise AlreadyRatedError()
+
+        filter_result = filter_message(data.content)
+        if filter_result.get("blocked"):
+            motivo = filter_result.get("reason", "suspect message")
+            raise InappropriateContentError(reason=motivo)
 
         cursor.execute(models.RATING_INSERT, (user_id, class_item_id, data.content, data.value))
         db.commit()
@@ -82,7 +88,8 @@ def remove_boost(feedback_id: int, user_id: int, db):
         cursor.close()
 
 class ClassItemIsNotValid(Exception):
-    """raised when class_item date is not available for feedbacks"""
+    """Raised when the class_item_id does not exist"""
+    pass
 
 class ClassItemNotFoundError(Exception):
     """Raised when the class_item_id does not exist"""
@@ -107,3 +114,9 @@ class AlreadyBoostedError(Exception):
 class BoostNotFoundError(Exception):
     """Raised when the user has not boosted this rating"""
     pass
+
+class InappropriateContentError(Exception):
+    """Raised when the rating content does not pass the mesage filter"""
+    def __init__(self, reason: str):
+        self.reason = reason
+        super().__init__(self.reason)
