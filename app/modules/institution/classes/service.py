@@ -85,13 +85,19 @@ def create_new_class(data, user_id, db):
         cursor.close()
 
 
-def get_classes(user_id, role, db):
+def get_classes(payload, db):
+    user_id = payload.get("sub")
+    role = payload.get("role")
+    current_date = date.today()
+
+    print(user_id)
+
     cursor = db.cursor(dictionary=True)
     try:
         if role == "student":
-            cursor.execute(models.CLASS_GET_BY_STUDENT_QUERY, (user_id,))
+            cursor.execute(models.CLASS_GET_BY_STUDENT_QUERY, (current_date, current_date, user_id))
         elif role == "professor":
-            cursor.execute(models.CLASS_GET_BY_PROFESSOR_QUERY, (user_id,))
+            cursor.execute(models.CLASS_GET_BY_PROFESSOR_QUERY, (current_date, current_date, user_id))
         else:
             raise HTTPException(
                 status_code=403,

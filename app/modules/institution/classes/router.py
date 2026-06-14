@@ -1,15 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException
 from app.core.database import get_db
 from app.core.access_validation import validate_access_token, validate_professor, validate_student
+from datetime import date
 from . import service, schemas
 
 router = APIRouter()
 
-@router.get("/{institution_id}/classes", response_model=schemas.ClassListResponse, status_code=200)
+@router.get("/{institution_id}/classes", response_model=schemas.ClassResponse, status_code=200)
 async def get_classes(institution_id: int, db=Depends(get_db), payload=Depends(validate_access_token)):
-    user_id = int(payload.get("sub"))
-    role = payload.get("role")
-    classes = service.get_classes(user_id, role, db)
+    classes = service.get_classes(payload, db)
     return {"classes": classes}
 
 @router.post("/{institution_id}/classes", response_model=schemas.ClassCreateResponse, dependencies=[Depends(validate_professor)], status_code=201)
