@@ -1,6 +1,6 @@
 import re
-from Util import BLACKLIST_NORMALIZED
-from Normalize import normalize_full
+from .Util import BLACKLIST_NORMALIZED
+from .Normalize import normalize_full
 
 def create_regex_blacklist(blacklist: list) -> re.Pattern:
     parts = [r"".join(f"{re.escape(c)}+" for c in word) for word in blacklist]

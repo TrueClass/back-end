@@ -1,5 +1,5 @@
 from . import models
-from Filter.Filter import filter_message
+from .Filter.Filter import filter_message
 
 def submit_rating(class_item_id: int, user_id: int, data: object, db):
     cursor = db.cursor(dictionary=True)

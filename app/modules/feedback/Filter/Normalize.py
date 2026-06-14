@@ -1,6 +1,6 @@
 import unicodedata
 import re
-from Util import less_repetition, remove_spaces, remove_point_between_letters
+from .Util import less_repetition, remove_spaces, remove_point_between_letters
 
 def strip_accents(texto: str) -> str:
     texto = unicodedata.normalize("NFD", texto)

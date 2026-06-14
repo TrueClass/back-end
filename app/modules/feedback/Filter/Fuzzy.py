@@ -1,6 +1,6 @@
 from rapidfuzz import fuzz
-from Normalize import normalize_full
-from Util import BLACKLIST_NORMALIZED
+from .Normalize import normalize_full
+from .Util import BLACKLIST_NORMALIZED
 from typing import TypedDict
 
 class FuzzyResult(TypedDict):

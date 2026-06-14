@@ -1,8 +1,8 @@
-from Normalize import normalize
-from Detectors import detector
-from Fuzzy import fuzzy
-from Blacklist import blacklist
-from Util import BLACKLIST
+from .Normalize import normalize
+from .Detectors import detector
+from .Fuzzy import fuzzy
+from .Blacklist import blacklist
+from .Util import BLACKLIST
 
 THRESHOLD = 89
 
