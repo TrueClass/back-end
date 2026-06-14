@@ -1,5 +1,3 @@
-from pyasn1.type.constraint import InnerTypeConstraint
-
 from . import models
 from Filter.Filter import filter_message
 
