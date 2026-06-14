@@ -24,14 +24,15 @@ def submit_rating(class_item_id: int, user_id: int, data: object, db):
     finally:
         cursor.close()
 
-def get_ratings_by_class_item(class_item_id: int, limit: int, page: int, db):
+def get_ratings_by_class_item(payload, class_item_id: int, limit: int, page: int, db):
     cursor = db.cursor(dictionary=True)
+    student_id = payload.get("sub")
 
     try:
         cursor.execute(models.RATINGS_COUNT, (class_item_id,))
         total = cursor.fetchone()["count"]
 
-        cursor.execute(models.RATINGS_BY_CLASS_ITEM, (class_item_id, limit, limit * (page - 1)))
+        cursor.execute(models.RATINGS_BY_CLASS_ITEM, (student_id, class_item_id, limit, limit * (page - 1)))
         ratings = cursor.fetchall()
 
         return (total, ratings)

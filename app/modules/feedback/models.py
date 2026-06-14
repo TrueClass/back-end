@@ -32,10 +32,9 @@ UPDATE_PROFESSOR_RATING = """
 """
 
 RATINGS_BY_CLASS_ITEM = """
-    SELECT id, content, value, boosts, created_at
+    SELECT id, content, value, boosts, created_at, IF(student_id = 55, 1, 0) AS sent_by_user
     FROM TC.rating
-    WHERE class_item_id = %s AND active = 1
-    LIMIT %s OFFSET %s
+    WHERE class_item_id = 3 AND active = 1;
 """
 
 RATINGS_COUNT = """

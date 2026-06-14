@@ -14,6 +14,7 @@ class RatingItem(BaseModel):
     value: int
     boosts: int
     created_at: datetime
+    sent_by_user: int
 
 class RatingsByClassItem(BaseModel):
     total: int = Field(description="Total amount of ratings for this classes item")
