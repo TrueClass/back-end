@@ -21,14 +21,16 @@ class ClassCreateResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 # --- GET Classes ---
-class ClassListItem(BaseModel):
+class Class(BaseModel):
     id: int
     class_: str = Field(alias='class')
     subject: str
     professor_name: str | None = None
+    last_class: date | None = None
+    next_class: date | None = None
 
-class ClassListResponse(BaseModel):
-    classes: list[ClassListItem]
+class ClassResponse(BaseModel):
+    classes: list[Class]
 
 # --- GET Class Items ---
 class ClassDateItem(BaseModel):
@@ -38,4 +40,3 @@ class ClassDateItem(BaseModel):
 
 class ClassDatesResponse(BaseModel):
     dates: list[ClassDateItem]
-
