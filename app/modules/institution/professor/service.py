@@ -24,7 +24,13 @@ def create_new_professor(institution_id: int, data, db):
     hashed_password = password_hasher.hash(data.password)
 
     try:
-        cursor.execute(models.PROFESSOR_INSERT_QUERY, (institution_id, data.email, hashed_password))
+        values = (institution_id, data.email, hashed_password)
+        if data.is_coordinator:
+            values = values + ("coordinator",)
+        else:
+            values = values + ("professor",)
+
+        cursor.execute(models.PROFESSOR_INSERT_QUERY, values)
         db.commit()
         professor_id = cursor.lastrowid
 
