@@ -1,5 +1,5 @@
 CHECK_CLASS_ITEM_EXISTS = """
-    SELECT ci.id, c.professor_id
+    SELECT ci.id, c.professor_id, IF(%s >= ci.created_at, 1, 0) AS is_valid
     FROM TC.class_item ci JOIN TC.class c ON ci.class_id = c.id
     WHERE ci.id = %s
 """
