@@ -86,7 +86,7 @@ def create_new_class(data, user_id, db):
 
 
 def get_classes(payload, db):
-    user_id = payload.get("sub")
+    user_id = int(payload.get("sub"))
     role = payload.get("role")
     current_date = date.today()
 
