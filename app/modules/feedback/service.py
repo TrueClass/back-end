@@ -1,12 +1,18 @@
 from . import models
 from .Filter.Filter import filter_message
+from datetime import date
 
 def submit_rating(class_item_id: int, user_id: int, data: object, db):
     cursor = db.cursor(dictionary=True)
+    current_date = date.today()
 
     try:
-        cursor.execute(models.CHECK_CLASS_ITEM_EXISTS, (class_item_id,))
+        cursor.execute(models.CHECK_CLASS_ITEM_EXISTS, (current_date, class_item_id))
         class_item = cursor.fetchone()
+
+        if not class_item.get("is_valid"):
+            raise ClassItemIsNotValid()
+        
         if not class_item:
             raise ClassItemNotFoundError()
 
@@ -80,6 +86,10 @@ def remove_boost(feedback_id: int, user_id: int, db):
         return {"boosts": cursor.fetchone()["boosts"]}
     finally:
         cursor.close()
+
+class ClassItemIsNotValid(Exception):
+    """Raised when the class_item_id does not exist"""
+    pass
 
 class ClassItemNotFoundError(Exception):
     """Raised when the class_item_id does not exist"""
