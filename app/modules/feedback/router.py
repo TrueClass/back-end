@@ -32,7 +32,7 @@ async def get_ratings(
     payload=Depends(validate_access_token)
 ):
     
-    result = service.get_ratings_by_class_item(payload,class_item_id, limit, page, db)
+    result = service.get_ratings_by_class_item(payload, class_item_id, limit, page, db)
     return {"total": result[0], "limit": limit, "page": page, "ratings": result[1]}
 
 @router.post("/{feedback_id}/boost", response_model=schemas.BoostResponse, status_code=201)
