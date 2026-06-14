@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from app.core.database import get_db
 from app.core.access_validation import validate_access_token, validate_professor, validate_student
-from datetime import date
 from . import service, schemas
 
 router = APIRouter()

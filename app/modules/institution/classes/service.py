@@ -90,8 +90,6 @@ def get_classes(payload, db):
     role = payload.get("role")
     current_date = date.today()
 
-    print(user_id)
-
     cursor = db.cursor(dictionary=True)
     try:
         if role == "student":
