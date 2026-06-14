@@ -32,10 +32,10 @@ UPDATE_PROFESSOR_RATING = """
 """
 
 RATINGS_BY_CLASS_ITEM = """
-    SELECT r.id, r.content, r.value, r.boosts, r.created_at, IF(r.student_id = %s, 1, 0) AS sent_by_user, EXISTS(SELECT 1 FROM TC.rating_boost WHERE student_id = %s AND rating_id = r.id) AS boosted_by_user
-    FROM TC.rating r JOIN TC.rating_boost rb ON r.id = rb.rating_id
-    WHERE class_item_id = %s AND active = 1
-    LIMIT %s OFFSET %s;
+    SELECT r.id, r.content, r.value, r.boosts, r.created_at, IF(r.student_id = %s, 1, 0) AS sent_by_user, EXISTS(SELECT 1 FROM TC.rating_boost rb WHERE rb.student_id = %s AND rb.rating_id = r.id) AS boosted_by_user
+    FROM TC.rating r
+    WHERE r.class_item_id = %s AND active = 1 
+    ORDER BY r.boosts DESC LIMIT %s OFFSET %s;
 """
 
 RATINGS_COUNT = """
