@@ -1,4 +1,7 @@
+from pyasn1.type.constraint import InnerTypeConstraint
+
 from . import models
+from Filter.Filter import filter_message
 
 def submit_rating(class_item_id: int, user_id: int, data: object, db):
     cursor = db.cursor(dictionary=True)
@@ -16,6 +19,11 @@ def submit_rating(class_item_id: int, user_id: int, data: object, db):
         cursor.execute(models.CHECK_ALREADY_RATED, (user_id, class_item_id))
         if cursor.fetchone():
             raise AlreadyRatedError()
+
+        filter_result = filter_message(data.content)
+        if filter_result.get("blocked"):
+            motivo = filter_result.get("reason", "suspect message")
+            raise InappropriateContentError(reason=motivo)
 
         cursor.execute(models.RATING_INSERT, (user_id, class_item_id, data.content, data.value))
         db.commit()
@@ -98,3 +106,9 @@ class AlreadyBoostedError(Exception):
 class BoostNotFoundError(Exception):
     """Raised when the user has not boosted this rating"""
     pass
+
+class InappropriateContentError(Exception):
+    """Raised when the rating content does not pass the mesage filter"""
+    def __init__(self, reason: str):
+        self.reason = reason
+        super().__init__(self.reason)
