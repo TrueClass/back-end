@@ -26,9 +26,9 @@ def create_new_professor(institution_id: int, data, db):
     try:
         values = (institution_id, data.email, hashed_password)
         if data.is_coordinator:
-            value = value + ("coordinator",)
+            values = values + ("coordinator",)
         else:
-            value = value + ("professor",)
+            values = values + ("professor",)
 
         cursor.execute(models.PROFESSOR_INSERT_QUERY, values)
         db.commit()
