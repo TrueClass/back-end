@@ -16,6 +16,16 @@ async def professor_by_coordinator(institution_id: int, limit: int = Query(10, g
     total, professors = service.get_professor_by_coordinator(institution_id, payload, limit, page, db)
     return {"total": total, "limit": limit, "page": page, "professors": professors}
 
+@router.get("/{institution_id}/professor/{professor_id}/classes", response_model=schemas.ProfessorClassesResponse, dependencies=[Depends(validate_coordinator)], status_code=200)
+async def get_professor_classes(institution_id: int, professor_id: int, db=Depends(get_db)):
+    classes = service.get_professor_classes(institution_id, professor_id, db)
+    return {"classes": classes}
+
+@router.get("/{institution_id}/professor/{professor_id}/feedbacks", response_model=schemas.ProfessorFeedbacksResponse, dependencies=[Depends(validate_coordinator)], status_code=200)
+async def get_professor_feedbacks(institution_id: int, professor_id: int, limit: int = Query(5, ge=1, le=20), db=Depends(get_db)):
+    most_boosted, highest_rating, lowest_rating = service.get_professor_feedbacks(institution_id, professor_id, limit, db)
+    return {"most_boosted": most_boosted, "highest_rating": highest_rating, "lowest_rating": lowest_rating}
+
 @router.post("/{institution_id}/professor", response_model=schemas.ProfessorCreateResponse, dependencies=[Depends(validate_coordinator)], status_code=201)
 async def create_professor(institution_id: int, professor_in: schemas.ProfessorCreate, db=Depends(get_db)):
     try:
