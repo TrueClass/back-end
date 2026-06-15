@@ -68,10 +68,10 @@ def get_professor_by_coordinator(institution_id: int, payload: object, limit: in
     cursor = db.cursor(dictionary=True)
     coordinator_id = int(payload.get("sub"))
     try:
-        cursor.execute(models.PROFESSOR_COUNT_QUERY, (institution_id, coordinator_id))
+        cursor.execute(models.PROFESSOR_COUNT_BY_COORDINATOR, (coordinator_id,))
         total = cursor.fetchone()["count"]
 
-        cursor.execute(models.PROFESSOR_GET_QUERY, (institution_id, coordinator_id, limit, limit * (page - 1)))
+        cursor.execute(models.PROFESSOR_GET_BY_COORDINATOR, (institution_id, coordinator_id, limit, limit * (page - 1)))
         professors = cursor.fetchall()
 
         return (total, professors)
