@@ -107,6 +107,17 @@ def get_classes(payload, db):
         cursor.close()
 
 
+def get_classes_by_professor(professor_id, db):
+    current_date = date.today()
+    cursor = db.cursor(dictionary=True)
+    try:
+        cursor.execute(models.CLASS_GET_BY_PROFESSOR_QUERY, (current_date, current_date, professor_id))
+        rows = cursor.fetchall()
+        return [dict(row) for row in rows]
+    finally:
+        cursor.close()
+
+
 def get_class_items(class_id, db):
     cursor = db.cursor(dictionary=True)
     try:
