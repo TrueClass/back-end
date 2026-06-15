@@ -18,7 +18,7 @@ class ProfessorItem(BaseModel):
     profile_picture: str | None
     is_coordinator: bool
 
-class ProfessorByInstitution(BaseModel):
+class ProfessorList(BaseModel):
     total: int = Field(description="Total amount of entries returned to this institution")
     limit: int = Field(description="Amount of entries to be returned")
     page: int = Field(description="Determines the offset of the query. Determined by the limit: limit*(page-1).")
