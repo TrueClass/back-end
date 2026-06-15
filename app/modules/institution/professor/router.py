@@ -6,9 +6,14 @@ from . import service, schemas
 
 router = APIRouter()
 
-@router.get("/{institution_id}/professor", response_model=schemas.ProfessorByInstitution, dependencies=[Depends(validate_professor)], status_code=200)
+@router.get("/{institution_id}/professor_by_institution", response_model=schemas.ProfessorList, dependencies=[Depends(validate_professor)], status_code=200)
 async def professor_by_institution(institution_id: int, limit: int = Query(10, ge=1), page: int = Query(1, ge=1), db=Depends(get_db)):
     total, professors = service.get_professor_by_institution(institution_id, limit, page, db)
+    return {"total": total, "limit": limit, "page": page, "professors": professors}
+
+@router.get("/{institution_id}/professor_by_coordinator", response_model=schemas.ProfessorList, dependencies=[Depends(validate_professor)], status_code=200)
+async def professor_by_coordinator(institution_id: int, limit: int = Query(10, ge=1), page: int = Query(1, ge=1), db=Depends(get_db)):
+    total, professors = service.get_professor_by_coordinator(institution_id, limit, page, db)
     return {"total": total, "limit": limit, "page": page, "professors": professors}
 
 @router.post("/{institution_id}/professor", response_model=schemas.ProfessorCreateResponse, dependencies=[Depends(validate_coordinator)], status_code=201)
