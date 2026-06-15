@@ -25,12 +25,6 @@ def leetspeak(texto: str) -> str:
             texto = texto.replace(char, letra)
     return texto
 
-def normalize(texto: str) -> str:
-    texto = to_lowercase(texto)
-    texto = strip_accents(texto)
-    texto = leetspeak(texto)
-    return texto
-
 def normalize_full(texto: str) -> str:
     texto = to_lowercase(texto)
     texto = strip_accents(texto)

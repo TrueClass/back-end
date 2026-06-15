@@ -10,11 +10,12 @@ def submit_rating(class_item_id: int, user_id: int, data: object, db):
         cursor.execute(models.CHECK_CLASS_ITEM_EXISTS, (current_date, class_item_id))
         class_item = cursor.fetchone()
 
-        if not class_item.get("is_valid"):
-            raise ClassItemIsNotValid()
-        
         if not class_item:
             raise ClassItemNotFoundError()
+
+        if not class_item.get("is_valid"):
+            raise ClassItemIsNotValid()
+
 
         cursor.execute(models.CHECK_STUDENT_ENROLLED, (user_id, class_item_id))
         if not cursor.fetchone():
