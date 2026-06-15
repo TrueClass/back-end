@@ -21,7 +21,7 @@ async def enroll_class(institution_id: int, class_id: int, db=Depends(get_db), p
     return service.link_class_student(user_id, class_id, db)
 
 @router.get("/{institution_id}/professor/{professor_id}/classes", response_model=schemas.ClassResponse, dependencies=[Depends(validate_coordinator)], status_code=200)
-async def get_classes_by_professor(_institution_id: int, professor_id: int, db=Depends(get_db)):
+async def get_classes_by_professor(institution_id: int, professor_id: int, db=Depends(get_db)):
     return {"classes": service.get_classes_by_professor(professor_id, db)}
 
 @router.get("/{institution_id}/classes/{class_id}/items", response_model=schemas.ClassDatesResponse, status_code=200, dependencies=[Depends(validate_access_token)])
