@@ -40,7 +40,7 @@ async def validate_professor(access_token: Annotated[str | None, Cookie()] = Non
         raise HTTPException(status_code=401, detail="Token expirado")
     except JWTError:
         raise HTTPException(status_code=401, detail="Token inválido")
-    if payload.get("role") != "professor":
+    if payload.get("role") != "professor" or payload.get("role") != "coordinator":
         raise HTTPException(status_code=403, detail="Usuário não autorizado")
 
 async def validate_student(access_token: Annotated[str | None, Cookie()] = None):
