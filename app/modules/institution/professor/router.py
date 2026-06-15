@@ -26,7 +26,7 @@ async def get_professor_feedbacks(institution_id: int, professor_id: int, limit:
     most_boosted, highest_rating, lowest_rating = service.get_professor_feedbacks(institution_id, professor_id, limit, db)
     return {"most_boosted": most_boosted, "highest_rating": highest_rating, "lowest_rating": lowest_rating}
 
-@router.post("/{institution_id}/professor", response_model=schemas.ProfessorCreateResponse, dependencies=[Depends(validate_coordinator)], status_code=201)
+@router.post("/{institution_id}/professor", response_model=schemas.ProfessorCreateResponse, status_code=201)
 async def create_professor(institution_id: int, professor_in: schemas.ProfessorCreate, db=Depends(get_db)):
     try:
         return service.create_new_professor(institution_id, professor_in, db)

@@ -11,10 +11,10 @@ CLASS_GET_BY_STUDENT_QUERY = ("""
                               GROUP BY c.id, c.class, c.subject, p.name
                               """)
 CLASS_GET_BY_PROFESSOR_QUERY = """
-                              SELECT c.id, c.class, c.subject, MAX(CASE WHEN created_at < %s THEN created_at END) AS last_class, MIN(CASE WHEN created_at >= %s THEN created_at END) AS next_class
-                              FROM TC.class c JOIN TC.class_item ci ON c.id = ci.class_id
+                              SELECT c.id, c.class, c.subject, p.name AS professor_name, MAX(CASE WHEN ci.created_at < %s THEN ci.created_at END) AS last_class, MIN(CASE WHEN ci.created_at >= %s THEN ci.created_at END) AS next_class
+                              FROM TC.class c JOIN TC.professor_profile p ON p.user_id = c.professor_id JOIN TC.class_item ci ON c.id = ci.class_id
                               WHERE c.professor_id = %s
-                              group by c.id
+                              GROUP BY c.id, c.class, c.subject, p.name
                               """
 CLASS_ITEMS_GET_QUERY = "SELECT ci.id, ci.created_at, ci.title FROM TC.class_item ci WHERE ci.class_id = %s ORDER BY ci.created_at"
 VALIDATE_STUDENT_CLASS_LINK_QUERY = "SELECT id FROM TC.student_class WHERE student_id = %s AND class_id = %s"
