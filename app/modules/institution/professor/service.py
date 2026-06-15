@@ -1,3 +1,4 @@
+from datetime import date
 import mysql.connector
 from mysql.connector import errorcode
 from argon2 import PasswordHasher, Type
@@ -61,6 +62,31 @@ def get_professor_by_institution(institution_id: int, limit: int, page: int, db)
         professors = cursor.fetchall()
 
         return (total, professors)
+    finally:
+        cursor.close()
+
+def get_professor_classes(institution_id: int, professor_id: int, db):
+    cursor = db.cursor(dictionary=True)
+    current_date = date.today()
+    try:
+        cursor.execute(models.PROFESSOR_CLASSES_BY_ID, (current_date, current_date, professor_id, institution_id))
+        return cursor.fetchall()
+    finally:
+        cursor.close()
+
+def get_professor_feedbacks(institution_id: int, professor_id: int, limit: int, db):
+    cursor = db.cursor(dictionary=True)
+    try:
+        cursor.execute(models.PROFESSOR_FEEDBACKS_MOST_BOOSTED, (professor_id, institution_id, limit))
+        most_boosted = cursor.fetchall()
+
+        cursor.execute(models.PROFESSOR_FEEDBACKS_HIGHEST_RATING, (professor_id, institution_id, 3))
+        highest_rating = cursor.fetchall()
+
+        cursor.execute(models.PROFESSOR_FEEDBACKS_LOWEST_RATING, (professor_id, institution_id, 3))
+        lowest_rating = cursor.fetchall()
+
+        return most_boosted, highest_rating, lowest_rating
     finally:
         cursor.close()
 
