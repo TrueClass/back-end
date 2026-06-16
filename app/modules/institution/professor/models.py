@@ -20,7 +20,6 @@ PROFESSOR_CLASSES_BY_ID = """
     JOIN TC.users u ON c.professor_id = u.id
     WHERE c.professor_id = %s AND u.institution_id = %s
     GROUP BY c.id, c.class, c.subject
-    HAVING last_class IS NOT NULL
 """
 
 PROFESSOR_FEEDBACKS_MOST_BOOSTED = """
