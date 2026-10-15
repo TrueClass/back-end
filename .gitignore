@@ -4,3 +4,7 @@ venv
 __pycache__
 .idea/
 *.iml
+.env.local
+local/
+migrations/
+docker-compose.yml

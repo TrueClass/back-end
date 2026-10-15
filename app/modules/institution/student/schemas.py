@@ -2,7 +2,7 @@ from pydantic import BaseModel, EmailStr, Field
 
 class StudentCreate(BaseModel):
     email: EmailStr
-    password: str
+    password: str = Field(min_length=8, max_length=128)
 
 class StudentCreateResponse(BaseModel):
     id: int

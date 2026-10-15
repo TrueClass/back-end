@@ -1,5 +1,6 @@
 from . import service, schemas
 from app.core.database import get_redis, get_db
+from app.core.cookies import set_access_cookie, clear_auth_cookies
 from fastapi import APIRouter, Depends, HTTPException, Cookie, Response
 
 router = APIRouter(prefix="/authenticate", tags=["Autenticação"])
@@ -13,22 +14,15 @@ async def authenticate_request(
 ):
     try:
         new_access_token = await service.is_token_valid(refresh_token, cache, db)
-        if(new_access_token):
-            response.set_cookie(
-                key="access_token",
-                value=new_access_token,
-                httponly=True,
-                secure=True,
-                samesite="none",
-                max_age=1800 # Tempo de vida em segundos (30 minutos)
-            )
-        return { "message":"Authentication has been made successfully!"}
     except service.TokenNotRecieved:
-        raise HTTPException(status_code=401, detail="Token wasn't informed on request.")
+        raise HTTPException(status_code=401, detail="Token não informado na requisição")
     except service.TokenNotActive:
-        raise HTTPException(status_code=401, detail="Token isn't active on database")
+        raise HTTPException(status_code=401, detail="Sessão encerrada ou expirada")
     except service.InvalidOrInaccessibleToken:
-        raise HTTPException(status_code=401, detail="Token is unreachable or doesn't exist")
+        raise HTTPException(status_code=401, detail="Token inválido")
+
+    set_access_cookie(response, new_access_token)
+    return { "message": "Autenticação realizada com sucesso!"}
 
 @router.delete("", response_model=schemas.AuthenticateResponse, status_code=200)
 async def logout_request(
@@ -40,6 +34,5 @@ async def logout_request(
         await service.logout(refresh_token, cache)
     except (service.TokenNotRecieved, service.InvalidOrInaccessibleToken):
         pass
-    response.delete_cookie("access_token")
-    response.delete_cookie("refresh_token")
-    return {"message": "Logged out successfully"}
+    clear_auth_cookies(response)
+    return {"message": "Logout realizado com sucesso"}

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 from app.core.database import get_db
-from app.core.access_validation import validate_access_token, validate_professor
+from app.core.access_validation import validate_admin
 from .institution import service as institution_service
 from .institution import schemas as institution_schemas
 from .student.router import router as student_router
@@ -14,7 +14,7 @@ async def obtain_institutions(db=Depends(get_db)):
     institutions = institution_service.obtain_institution(db)
     return {"institutions": institutions}
 
-@router.post("", response_model=institution_schemas.InstitutionCreateResponse, dependencies=[Depends(validate_professor), Depends(validate_access_token)], status_code=201)
+@router.post("", response_model=institution_schemas.InstitutionCreateResponse, dependencies=[Depends(validate_admin)], status_code=201)
 async def create_institution(institution_in: institution_schemas.InstitutionCreate, db=Depends(get_db)):
     return institution_service.create_new_institution(institution_in, db)
 

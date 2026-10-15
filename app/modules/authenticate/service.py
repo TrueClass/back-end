@@ -1,4 +1,4 @@
-from ..login.service import fetch_user_by_id, create_access_token
+from ..login.service import fetch_user_by_id, create_access_token, UserNotFoundError
 from jose import jwt, JWTError
 from dotenv import load_dotenv
 import os
@@ -7,7 +7,7 @@ load_dotenv()
 
 REFRESH_SECRET_KEY = os.getenv("REFRESH_SECRET_KEY")
 
-async def is_token_valid(refresh_token, cache, db):
+def decode_refresh_token(refresh_token) -> dict:
     if not refresh_token:
         raise TokenNotRecieved()
 
@@ -16,29 +16,30 @@ async def is_token_valid(refresh_token, cache, db):
     except JWTError:
         raise InvalidOrInaccessibleToken()
 
-    jti = payload.get("jti")
-    user_id = payload.get("sub")
+    if payload.get("type") != "refresh" or not payload.get("sub") or not payload.get("jti"):
+        raise InvalidOrInaccessibleToken()
+    return payload
 
-    status = await cache.get(f"tc:ref:{user_id}:{jti}")
+async def is_token_valid(refresh_token, cache, db):
+    payload = decode_refresh_token(refresh_token)
+    key = f"tc:ref:{payload['sub']}:{payload['jti']}"
+
+    status = await cache.get(key)
     if status != "active":
         raise TokenNotActive()
 
-    user = fetch_user_by_id(int(user_id), db)
+    try:
+        user = fetch_user_by_id(int(payload["sub"]), db)
+    except UserNotFoundError:
+        await cache.delete(key)
+        raise TokenNotActive()
+
     return create_access_token(user)
 
 async def logout(refresh_token, cache):
-    if not refresh_token:
-        raise TokenNotRecieved()
+    payload = decode_refresh_token(refresh_token)
+    await cache.delete(f"tc:ref:{payload['sub']}:{payload['jti']}")
 
-    try:
-        payload = jwt.decode(refresh_token, REFRESH_SECRET_KEY, algorithms=["HS256"])
-    except JWTError:
-        raise InvalidOrInaccessibleToken()
-
-    jti = payload.get("jti")
-    user_id = payload.get("sub")
-    await cache.delete(f"tc:ref:{user_id}:{jti}")
- 
 class TokenNotRecieved(Exception):
     """Raised when there's not an token in the request"""
     pass

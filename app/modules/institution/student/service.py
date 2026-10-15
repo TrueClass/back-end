@@ -1,18 +1,13 @@
 import mysql.connector
 from mysql.connector import errorcode
-from argon2 import PasswordHasher, Type
+from app.core.security import password_hasher
 from . import models
+from ..institution.service import ensure_email_allowed
 from ..exceptions import UserAlreadyExistsError, InstitutionDoesntExistError
 
-password_hasher = PasswordHasher(
-    memory_cost=65536,
-    time_cost=4,
-    parallelism=2,
-    hash_len=32,
-    type=Type.ID
-)
-
 def create_new_student(institution_id: int, data, db):
+    ensure_email_allowed(institution_id, data.email, db)
+
     hashed_password = password_hasher.hash(data.password)
     cursor = db.cursor()
     try:
@@ -20,6 +15,7 @@ def create_new_student(institution_id: int, data, db):
         db.commit()
         return {"id": cursor.lastrowid}
     except mysql.connector.Error as err:
+        db.rollback()
         if err.errno == errorcode.ER_DUP_ENTRY:
             raise UserAlreadyExistsError()
         elif err.errno == errorcode.ER_NO_REFERENCED_ROW_2:

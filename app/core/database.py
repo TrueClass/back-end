@@ -20,6 +20,7 @@ safe_redis_password = urllib.parse.quote_plus(REDIS_PASSWORD)
 
 db_config = {
     "host": DATABASE_HOST,
+    "port": int(MYSQL_PORT or 3306),
     "user": MYSQL_USER,
     "password": MYSQL_PASSWORD,
     "database": MYSQL_DATABASE

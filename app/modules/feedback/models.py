@@ -1,15 +1,3 @@
-CHECK_CLASS_ITEM_EXISTS = """
-    SELECT ci.id, c.professor_id, IF(%s >= ci.created_at, 1, 0) AS is_valid
-    FROM TC.class_item ci JOIN TC.class c ON ci.class_id = c.id
-    WHERE ci.id = %s
-"""
-
-CHECK_STUDENT_ENROLLED = """
-    SELECT sc.id FROM TC.student_class sc
-    JOIN TC.class_item ci ON ci.class_id = sc.class_id
-    WHERE sc.student_id = %s AND ci.id = %s
-"""
-
 CHECK_ALREADY_RATED = """
     SELECT id FROM TC.rating
     WHERE student_id = %s AND class_item_id = %s
@@ -31,11 +19,22 @@ UPDATE_PROFESSOR_RATING = """
     WHERE user_id = %s
 """
 
-RATINGS_BY_CLASS_ITEM = """
-    SELECT r.id, r.content, r.value, r.boosts, r.created_at, IF(r.student_id = %s, 1, 0) AS sent_by_user, EXISTS(SELECT 1 FROM TC.rating_boost rb WHERE rb.student_id = %s AND rb.rating_id = r.id) AS boosted_by_user
+_RATING_COLUMNS = """
+    r.id, r.content, r.value, r.boosts, r.created_at,
+    EXISTS(SELECT 1 FROM TC.rating_boost rb WHERE rb.student_id = %s AND rb.rating_id = r.id) AS boosted_by_user
+"""
+
+USER_RATING_BY_CLASS_ITEM = f"""
+    SELECT {_RATING_COLUMNS}, 1 AS sent_by_user
     FROM TC.rating r
-    WHERE r.class_item_id = %s AND active = 1 
-    ORDER BY r.boosts DESC LIMIT %s OFFSET %s;
+    WHERE r.class_item_id = %s AND r.student_id = %s AND r.active = 1
+"""
+
+RATINGS_BY_CLASS_ITEM = f"""
+    SELECT {_RATING_COLUMNS}, 0 AS sent_by_user
+    FROM TC.rating r
+    WHERE r.class_item_id = %s AND r.student_id <> %s AND r.active = 1
+    ORDER BY r.boosts DESC, r.id DESC LIMIT %s OFFSET %s
 """
 
 RATINGS_COUNT = """
@@ -43,7 +42,7 @@ RATINGS_COUNT = """
     WHERE class_item_id = %s AND active = 1
 """
 
-CHECK_RATING_EXISTS = "SELECT id FROM TC.rating WHERE id = %s AND active = 1"
+RATING_CLASS_ITEM = "SELECT class_item_id FROM TC.rating WHERE id = %s AND active = 1"
 
 CHECK_BOOST_EXISTS = "SELECT id FROM TC.rating_boost WHERE student_id = %s AND rating_id = %s"
 
@@ -53,6 +52,6 @@ DELETE_BOOST = "DELETE FROM TC.rating_boost WHERE student_id = %s AND rating_id 
 
 INCREMENT_BOOSTS = "UPDATE TC.rating SET boosts = boosts + 1 WHERE id = %s"
 
-DECREMENT_BOOSTS = "UPDATE TC.rating SET boosts = boosts - 1 WHERE id = %s"
+DECREMENT_BOOSTS = "UPDATE TC.rating SET boosts = GREATEST(boosts - 1, 0) WHERE id = %s"
 
 GET_BOOST_COUNT = "SELECT boosts FROM TC.rating WHERE id = %s"

@@ -6,19 +6,23 @@ on:
 jobs:
   deploy:
     runs-on: self-hosted
+    env:
+      ENV_DEST: /home/joao/actions-runner/_work/back-end/back-end/.env
     steps:
       - name: "Checkout code"
         uses: actions/checkout@v4
 
       - name: "Generate .env file from Single Secret"
+        env:
+          ENV_FILE: ${{ secrets.ENV_FILE }}
         run: |
-          DEST="/home/joao/actions-runner/_work/back-end/back-end/.env"
-          echo '${{ secrets.ENV_FILE }}' > $DEST
-          chmod 600 $DEST
-      
+          umask 077
+          printf '%s\n' "$ENV_FILE" > "$ENV_DEST"
+          chmod 600 "$ENV_DEST"
+
       - name: "Validate .env existence"
         run: |
-          if [ -s "/home/joao/actions-runner/_work/back-end/back-end/.env" ]; then
+          if [ -s "$ENV_DEST" ]; then
             echo "✅ Arquivo .env gerado com sucesso e não está vazio!"
           else
             echo "❌ ERRO: O arquivo .env está vazio ou não foi criado."

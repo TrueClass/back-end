@@ -9,3 +9,7 @@ class CoordinatorDoesntExistError(Exception):
 class InstitutionDoesntExistError(Exception):
     """Raised when institution_id does not represent any institution"""
     pass
+
+class EmailDomainNotAllowedError(Exception):
+    """Raised when the e-mail domain isn't registered for the institution"""
+    pass
