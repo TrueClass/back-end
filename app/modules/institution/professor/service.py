@@ -16,7 +16,8 @@ def create_new_professor(institution_id: int, data, coordinator_id: int | None, 
             if not cursor.fetchone():
                 raise CoordinatorDoesntExistError()
 
-        cursor.execute(models.PROFESSOR_INSERT_QUERY, (institution_id, data.email, hashed_password))
+        role = "coordinator" if data.is_coordinator else "professor"
+        cursor.execute(models.PROFESSOR_INSERT_QUERY, (institution_id, data.email, hashed_password, role))
         professor_id = cursor.lastrowid
 
         cursor.execute(models.PROFESSOR_PROFILE_INSERT_QUERY, (professor_id, data.name, int(data.is_coordinator)))

@@ -1,5 +1,6 @@
 _USER_COLUMNS = """
-    u.id, u.role, u.institution_id, COALESCE(pp.is_coordinator, 0) AS is_coordinator
+    u.id, IF(u.role = 'coordinator', 'professor', u.role) AS role, u.institution_id,
+    IF(u.role = 'coordinator', 1, COALESCE(pp.is_coordinator, 0)) AS is_coordinator
     FROM TC.users u LEFT JOIN TC.professor_profile pp ON pp.user_id = u.id
 """
 

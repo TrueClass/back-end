@@ -18,11 +18,12 @@ async def get_professor_creator(
     if is_admin_key_valid(x_admin_key):
         return None
     payload = await validate_access_token(access_token)
-    if payload.get("role") != "professor" or not payload.get("coord") or payload.get("inst") != institution_id:
+    if not payload.get("coord") or payload.get("inst") != institution_id:
         raise HTTPException(status_code=403, detail="Usuário não autorizado")
     return payload
 
 @router.get("/{institution_id}/professor", response_model=schemas.ProfessorByInstitution, dependencies=[Depends(validate_institution_member)], status_code=200)
+@router.get("/{institution_id}/professor_by_institution", response_model=schemas.ProfessorByInstitution, dependencies=[Depends(validate_institution_member)], status_code=200)
 async def professor_by_institution(institution_id: int, limit: int = Query(10, ge=1, le=100), page: int = Query(1, ge=1), db=Depends(get_db)):
     total, professors = service.get_professor_by_institution(institution_id, limit, page, db)
     return {"total": total, "limit": limit, "page": page, "professors": professors}

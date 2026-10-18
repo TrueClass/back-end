@@ -102,7 +102,7 @@ def get_classes(payload, db):
     try:
         if role == "student":
             cursor.execute(models.CLASS_GET_BY_STUDENT_QUERY, (current_date, current_date, user_id))
-        elif role == "professor":
+        elif role == "professor" or role == "coordinator":
             cursor.execute(models.CLASS_GET_BY_PROFESSOR_QUERY, (current_date, current_date, user_id))
         else:
             raise HTTPException(status_code=403, detail="Perfil inválido")

@@ -18,6 +18,8 @@ async def submit_rating(
         raise HTTPException(status_code=422, detail="Esta aula ainda não está disponível para avaliação")
     except service.AlreadyRatedError:
         raise HTTPException(status_code=409, detail="Você já avaliou esta aula")
+    except service.InappropriateContentError as e:
+        raise HTTPException(status_code=400, detail=f"Blocked: {e.reason}")
 
 @router.get("/{class_item_id}", response_model=schemas.RatingsByClassItem, status_code=200)
 async def get_ratings(
