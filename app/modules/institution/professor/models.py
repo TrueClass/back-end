@@ -43,3 +43,68 @@ _FEEDBACK_BASE = """
 FEEDBACKS_MOST_BOOSTED_QUERY = _FEEDBACK_BASE + " ORDER BY r.boosts DESC, r.created_at DESC LIMIT %s"
 FEEDBACKS_HIGHEST_QUERY = _FEEDBACK_BASE + " ORDER BY r.value DESC, r.boosts DESC LIMIT %s"
 FEEDBACKS_LOWEST_QUERY = _FEEDBACK_BASE + " ORDER BY r.value ASC, r.boosts DESC LIMIT %s"
+
+_PROFESSOR_RATINGS = """
+    FROM TC.rating r
+    JOIN TC.class_item ci ON ci.id = r.class_item_id
+    JOIN TC.class c ON c.id = ci.class_id
+    WHERE c.professor_id = %s AND r.active = 1
+"""
+
+PROFESSOR_RATINGS_COUNT = "SELECT COUNT(*) AS count" + _PROFESSOR_RATINGS
+
+PROFESSOR_THEMES = """
+    SELECT ai_themes, ai_themes_rating_count, ai_themes_created_at,
+           CASE
+               WHEN ai_themes_requested_at IS NOT NULL
+                AND ai_themes_requested_at > NOW() - INTERVAL %s SECOND THEN 1
+               ELSE 0
+           END AS generating
+    FROM TC.professor_profile WHERE user_id = %s
+"""
+
+CLAIM_THEMES_GENERATION = """
+    UPDATE TC.professor_profile SET ai_themes_requested_at = NOW()
+    WHERE user_id = %s
+      AND (ai_themes_requested_at IS NULL OR ai_themes_requested_at <= NOW() - INTERVAL %s SECOND)
+"""
+
+RELEASE_THEMES_GENERATION = "UPDATE TC.professor_profile SET ai_themes_requested_at = NULL WHERE user_id = %s"
+
+UPDATE_PROFESSOR_THEMES = """
+    UPDATE TC.professor_profile
+    SET ai_themes = %s, ai_themes_rating_count = %s, ai_themes_created_at = %s, ai_themes_requested_at = NULL
+    WHERE user_id = %s
+"""
+
+RATINGS_PENDING_ASPECTS = "SELECT r.id, r.content" + _PROFESSOR_RATINGS + " AND r.aspects_extracted_at IS NULL ORDER BY r.id"
+
+INSERT_RATING_ASPECT = """
+    INSERT INTO TC.rating_aspect (rating_id, sentiment, evidence_start, evidence_end, aspect)
+    VALUES (%s, %s, %s, %s, %s)
+"""
+
+MARK_ASPECTS_EXTRACTED = "UPDATE TC.rating SET aspects_extracted_at = NOW() WHERE id = %s"
+
+ASPECTS_PENDING_EMBEDDING = """
+    SELECT ra.id, ra.aspect
+    FROM TC.rating_aspect ra
+    JOIN TC.rating r ON r.id = ra.rating_id
+    JOIN TC.class_item ci ON ci.id = r.class_item_id
+    JOIN TC.class c ON c.id = ci.class_id
+    WHERE c.professor_id = %s AND r.active = 1
+      AND (ra.embedding IS NULL OR ra.embedding_model <> %s)
+"""
+
+UPDATE_ASPECT_EMBEDDING = "UPDATE TC.rating_aspect SET embedding = %s, embedding_model = %s WHERE id = %s"
+
+PROFESSOR_ASPECTS = """
+    SELECT ra.aspect, ra.sentiment, ra.evidence_start, ra.evidence_end, ra.embedding,
+           r.id AS rating_id, r.content, r.boosts, c.subject, ci.title
+    FROM TC.rating_aspect ra
+    JOIN TC.rating r ON r.id = ra.rating_id
+    JOIN TC.class_item ci ON ci.id = r.class_item_id
+    JOIN TC.class c ON c.id = ci.class_id
+    WHERE c.professor_id = %s AND r.active = 1 AND ra.embedding_model = %s
+    ORDER BY r.boosts DESC, r.id DESC
+"""

@@ -1,12 +1,15 @@
-from fastapi import APIRouter, Cookie, Depends, Header, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, Cookie, Depends, Header, HTTPException, Query, Request
 from typing import Annotated
 from app.core.database import get_db
 from app.core.access_validation import (
     validate_access_token, validate_professor, validate_coordinator,
     validate_institution_member, is_admin_key_valid
 )
-from ..exceptions import UserAlreadyExistsError, InstitutionDoesntExistError, CoordinatorDoesntExistError
-from . import service, schemas
+from ..exceptions import (
+    UserAlreadyExistsError, InstitutionDoesntExistError, CoordinatorDoesntExistError,
+    ProfessorHasNoRatingsError, ThemesUpToDateError
+)
+from . import service, schemas, themes
 
 router = APIRouter()
 
@@ -57,3 +60,27 @@ async def professor_classes(institution_id: int, professor_id: int, payload: dic
 @router.get("/{institution_id}/professor/{professor_id}/feedbacks", response_model=schemas.ProfessorFeedbacks, dependencies=[Depends(validate_professor)], status_code=200)
 async def professor_feedbacks(institution_id: int, professor_id: int, limit: int = Query(5, ge=1, le=20), payload: dict = Depends(validate_institution_member), db=Depends(get_db)):
     return service.get_professor_feedbacks(institution_id, professor_id, limit, payload, db)
+
+@router.get("/{institution_id}/professor/{professor_id}/themes", response_model=schemas.ProfessorThemesStatus, dependencies=[Depends(validate_coordinator)], status_code=200)
+def professor_themes(institution_id: int, professor_id: int, payload: dict = Depends(validate_institution_member), db=Depends(get_db)):
+    return service.get_professor_themes(institution_id, professor_id, payload, db)
+
+@router.post("/{institution_id}/professor/{professor_id}/themes", response_model=schemas.ProfessorThemesStatus, dependencies=[Depends(validate_coordinator)], status_code=202)
+def request_professor_themes(
+    institution_id: int,
+    professor_id: int,
+    request: Request,
+    background_tasks: BackgroundTasks,
+    payload: dict = Depends(validate_institution_member),
+    db=Depends(get_db)
+):
+    try:
+        status, start = service.request_professor_themes(institution_id, professor_id, payload, db)
+    except ProfessorHasNoRatingsError:
+        raise HTTPException(status_code=404, detail="Este professor ainda não possui avaliações")
+    except ThemesUpToDateError:
+        raise HTTPException(status_code=409, detail="Os temas já estão atualizados com todas as avaliações")
+
+    if start:
+        background_tasks.add_task(themes.run_themes_generation, professor_id, request.app.state.mysql_pool)
+    return status

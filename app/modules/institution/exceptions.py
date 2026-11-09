@@ -13,3 +13,11 @@ class InstitutionDoesntExistError(Exception):
 class EmailDomainNotAllowedError(Exception):
     """Raised when the e-mail domain isn't registered for the institution"""
     pass
+
+class ProfessorHasNoRatingsError(Exception):
+    """Raised when the professor has no active ratings to extract themes from"""
+    pass
+
+class ThemesUpToDateError(Exception):
+    """Raised when the stored themes already cover every active rating of the professor"""
+    pass

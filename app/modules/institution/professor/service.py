@@ -1,10 +1,16 @@
+import json
 import mysql.connector
 from mysql.connector import errorcode
 from fastapi import HTTPException
 from datetime import date
 from app.core.security import password_hasher
 from . import models
-from ..exceptions import UserAlreadyExistsError, InstitutionDoesntExistError, CoordinatorDoesntExistError
+from ..exceptions import (
+    UserAlreadyExistsError, InstitutionDoesntExistError, CoordinatorDoesntExistError,
+    ProfessorHasNoRatingsError, ThemesUpToDateError
+)
+
+THEMES_GENERATION_STALE_SECONDS = 600
 
 def create_new_professor(institution_id: int, data, coordinator_id: int | None, db):
     hashed_password = password_hasher.hash(data.password)
@@ -105,3 +111,55 @@ def get_professor_feedbacks(institution_id: int, professor_id: int, limit: int, 
         return result
     finally:
         cursor.close()
+
+def _read_themes_status(professor_id: int, cursor):
+    cursor.execute(models.PROFESSOR_RATINGS_COUNT, (professor_id,))
+    total = cursor.fetchone()["count"]
+
+    cursor.execute(models.PROFESSOR_THEMES, (THEMES_GENERATION_STALE_SECONDS, professor_id))
+    stored = cursor.fetchone()
+    generating = bool(stored and stored["generating"])
+    if not stored or stored["ai_themes"] is None:
+        return {"snapshot": None, "generating": generating}, total
+
+    return {
+        "snapshot": {
+            **json.loads(stored["ai_themes"]),
+            "rating_count": stored["ai_themes_rating_count"],
+            "created_at": stored["ai_themes_created_at"],
+            "up_to_date": stored["ai_themes_rating_count"] == total,
+        },
+        "generating": generating,
+    }, total
+
+def get_professor_themes(institution_id: int, professor_id: int, payload: dict, db):
+    get_viewable_professor(institution_id, professor_id, payload, db)
+
+    cursor = db.cursor(dictionary=True)
+    try:
+        status, _ = _read_themes_status(professor_id, cursor)
+        return status
+    finally:
+        cursor.close()
+
+def request_professor_themes(institution_id: int, professor_id: int, payload: dict, db) -> tuple[dict, bool]:
+    get_viewable_professor(institution_id, professor_id, payload, db)
+
+    cursor = db.cursor(dictionary=True)
+    try:
+        status, total = _read_themes_status(professor_id, cursor)
+        if total == 0:
+            raise ProfessorHasNoRatingsError()
+        if status["snapshot"] and status["snapshot"]["up_to_date"]:
+            raise ThemesUpToDateError()
+
+        cursor.execute(models.CLAIM_THEMES_GENERATION, (professor_id, THEMES_GENERATION_STALE_SECONDS))
+        claimed = cursor.rowcount == 1
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+    finally:
+        cursor.close()
+
+    return {**status, "generating": True}, claimed
