@@ -7,6 +7,8 @@ load_dotenv()
 COLIBRI_API_KEY = os.getenv("COLIBRI_API_KEY")
 COLIBRI_MODEL = "qwen3.6-colibri"
 GEMINI_MODEL = "gemini-3.8-flash"
+COLIBRI_TIMEOUT = 20
+GEMINI_TIMEOUT = 25
 
 gemini_client = None
 
@@ -37,7 +39,7 @@ def colibri_request(system_message: str, user_message: str, max_tokens: int, tem
         "stream": False
         },
         headers={"Authorization": f"Bearer {COLIBRI_API_KEY}"},
-        timeout=20
+        timeout=COLIBRI_TIMEOUT
     )
 
     resp.raise_for_status()
@@ -48,7 +50,8 @@ def gemini_request(system_message, message: str):
     interaction = get_gemini_client().interactions.create(
         model=GEMINI_MODEL,
         input=message,
-        system_instruction=system_message
+        system_instruction=system_message,
+        timeout=GEMINI_TIMEOUT
     )
 
     return interaction.output_text

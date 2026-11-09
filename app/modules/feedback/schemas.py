@@ -32,3 +32,7 @@ class RatingSummary(BaseModel):
     rating_count: int = Field(description="Amount of ratings the summary was generated from")
     created_at: datetime
     up_to_date: bool = Field(description="False when new ratings arrived after the summary was generated")
+
+class RatingSummaryStatus(BaseModel):
+    summary: RatingSummary | None = Field(description="Last stored summary, if any")
+    generating: bool = Field(description="True while a new summary is being generated in background")

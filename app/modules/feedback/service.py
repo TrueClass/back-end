@@ -7,6 +7,7 @@ from .Filter.Filter import filter_message
 from datetime import date, datetime
 
 SUMMARY_MAX_RATINGS = 150
+SUMMARY_GENERATION_STALE_SECONDS = 120
 
 SUMMARY_PROMPT = (
     "Você ajuda um professor a entender os feedbacks dos alunos sobre uma aula. "
@@ -131,21 +132,24 @@ def remove_boost(feedback_id: int, user_id: int, db):
     finally:
         cursor.close()
 
-def _read_stored_summary(class_item_id: int, cursor):
-    """Returns (stored summary or None, current active ratings count)"""
+def _read_summary_status(class_item_id: int, cursor):
     cursor.execute(models.RATINGS_COUNT, (class_item_id,))
     total = cursor.fetchone()["count"]
 
-    cursor.execute(models.CLASS_ITEM_SUMMARY, (class_item_id,))
+    cursor.execute(models.CLASS_ITEM_SUMMARY, (SUMMARY_GENERATION_STALE_SECONDS, class_item_id))
     stored = cursor.fetchone()
+    generating = bool(stored and stored["generating"])
     if not stored or not stored["ai_summary"]:
-        return None, total
+        return {"summary": None, "generating": generating}, total
 
     return {
-        "summary": stored["ai_summary"],
-        "rating_count": stored["ai_summary_rating_count"],
-        "created_at": stored["ai_summary_created_at"],
-        "up_to_date": stored["ai_summary_rating_count"] == total,
+        "summary": {
+            "summary": stored["ai_summary"],
+            "rating_count": stored["ai_summary_rating_count"],
+            "created_at": stored["ai_summary_created_at"],
+            "up_to_date": stored["ai_summary_rating_count"] == total,
+        },
+        "generating": generating,
     }, total
 
 def get_ratings_summary(class_item_id: int, payload: dict, db):
@@ -153,42 +157,24 @@ def get_ratings_summary(class_item_id: int, payload: dict, db):
 
     cursor = db.cursor(dictionary=True)
     try:
-        summary, _ = _read_stored_summary(class_item_id, cursor)
-        return summary
+        status, _ = _read_summary_status(class_item_id, cursor)
+        return status
     finally:
         cursor.close()
 
-def generate_ratings_summary(class_item_id: int, payload: dict, db):
+def request_ratings_summary(class_item_id: int, payload: dict, db) -> tuple[dict, bool]:
     get_accessible_class_item(class_item_id, payload, db)
 
     cursor = db.cursor(dictionary=True)
     try:
-        stored, total = _read_stored_summary(class_item_id, cursor)
+        status, total = _read_summary_status(class_item_id, cursor)
         if total == 0:
             raise NoRatingsError()
-        if stored and stored["up_to_date"]:
+        if status["summary"] and status["summary"]["up_to_date"]:
             raise SummaryUpToDateError()
 
-        cursor.execute(models.RATINGS_FOR_SUMMARY, (class_item_id, SUMMARY_MAX_RATINGS))
-        ratings = cursor.fetchall()
-    finally:
-        cursor.close()
-
-    feedbacks = "\n".join(
-        f"{i}. [nota {r['value']}, {r['boosts']} apoios] {r['content']}"
-        for i, r in enumerate(ratings, 1)
-    )
-    summary, model = request_completion(
-        system_message=SUMMARY_PROMPT,
-        user_message=f"Feedbacks dos alunos:\n<feedbacks>\n{feedbacks}\n</feedbacks>",
-        temperature=0.3,
-        max_tokens=500,
-    )
-    created_at = datetime.now()
-
-    cursor = db.cursor()
-    try:
-        cursor.execute(models.UPDATE_CLASS_ITEM_SUMMARY, (summary, total, created_at, model, class_item_id))
+        cursor.execute(models.CLAIM_SUMMARY_GENERATION, (class_item_id, SUMMARY_GENERATION_STALE_SECONDS))
+        claimed = cursor.rowcount == 1
         db.commit()
     except Exception:
         db.rollback()
@@ -196,7 +182,39 @@ def generate_ratings_summary(class_item_id: int, payload: dict, db):
     finally:
         cursor.close()
 
-    return {"summary": summary, "rating_count": total, "created_at": created_at, "up_to_date": True}
+    return {**status, "generating": True}, claimed
+
+def run_summary_generation(class_item_id: int, pool):
+    db = pool.get_connection()
+    cursor = db.cursor(dictionary=True)
+    try:
+        cursor.execute(models.RATINGS_COUNT, (class_item_id,))
+        total = cursor.fetchone()["count"]
+        cursor.execute(models.RATINGS_FOR_SUMMARY, (class_item_id, SUMMARY_MAX_RATINGS))
+        ratings = cursor.fetchall()
+        if not ratings:
+            raise NoRatingsError()
+
+        feedbacks = "\n".join(
+            f"{i}. [nota {r['value']}, {r['boosts']} apoios] {r['content']}"
+            for i, r in enumerate(ratings, 1)
+        )
+        summary, model = request_completion(
+            system_message=SUMMARY_PROMPT,
+            user_message=f"Feedbacks dos alunos:\n<feedbacks>\n{feedbacks}\n</feedbacks>",
+            temperature=0.3,
+            max_tokens=500,
+        )
+
+        cursor.execute(models.UPDATE_CLASS_ITEM_SUMMARY, (summary, total, datetime.now(), model, class_item_id))
+        db.commit()
+    except Exception:
+        db.rollback()
+        cursor.execute(models.RELEASE_SUMMARY_GENERATION, (class_item_id,))
+        db.commit()
+    finally:
+        cursor.close()
+        db.close()
 
 class ClassItemIsNotValid(Exception):
     """raised when class_item date is not available for feedbacks"""

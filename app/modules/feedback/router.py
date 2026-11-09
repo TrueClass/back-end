@@ -1,7 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request
 from app.core.database import get_db
 from app.core.access_validation import validate_access_token, validate_student, validate_professor
-from app.core.ai import AIUnavailableError
 from . import service, schemas
 
 router = APIRouter(prefix="/feedback", tags=["Feedback"])
@@ -32,7 +31,7 @@ async def get_ratings(
 ):
     return service.get_ratings_by_class_item(payload, class_item_id, limit, page, db)
 
-@router.get("/{class_item_id}/summary", response_model=schemas.RatingSummary | None, status_code=200)
+@router.get("/{class_item_id}/summary", response_model=schemas.RatingSummaryStatus, status_code=200)
 def get_ratings_summary(
     class_item_id: int,
     payload: dict = Depends(validate_professor),
@@ -40,20 +39,24 @@ def get_ratings_summary(
 ):
     return service.get_ratings_summary(class_item_id, payload, db)
 
-@router.post("/{class_item_id}/summary", response_model=schemas.RatingSummary, status_code=201)
-def generate_ratings_summary(
+@router.post("/{class_item_id}/summary", response_model=schemas.RatingSummaryStatus, status_code=202)
+def request_ratings_summary(
     class_item_id: int,
+    request: Request,
+    background_tasks: BackgroundTasks,
     payload: dict = Depends(validate_professor),
     db=Depends(get_db)
 ):
     try:
-        return service.generate_ratings_summary(class_item_id, payload, db)
+        status, start = service.request_ratings_summary(class_item_id, payload, db)
     except service.NoRatingsError:
         raise HTTPException(status_code=404, detail="Esta aula ainda não possui avaliações")
     except service.SummaryUpToDateError:
         raise HTTPException(status_code=409, detail="O resumo já está atualizado com todas as avaliações")
-    except AIUnavailableError:
-        raise HTTPException(status_code=503, detail="Resumo indisponível no momento")
+
+    if start:
+        background_tasks.add_task(service.run_summary_generation, class_item_id, request.app.state.mysql_pool)
+    return status
 
 @router.post("/{feedback_id}/boost", response_model=schemas.BoostResponse, status_code=201)
 async def add_boost(
