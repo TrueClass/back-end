@@ -8,7 +8,6 @@ COLIBRI_API_KEY = os.getenv("COLIBRI_API_KEY")
 COLIBRI_MODEL = "qwen3.6-colibri"
 GEMINI_MODEL = "gemini-3.8-flash"
 COLIBRI_TIMEOUT = 20
-GEMINI_TIMEOUT = 25
 
 gemini_client = None
 
@@ -50,8 +49,7 @@ def gemini_request(system_message, message: str):
     interaction = get_gemini_client().interactions.create(
         model=GEMINI_MODEL,
         input=message,
-        system_instruction=system_message,
-        timeout=GEMINI_TIMEOUT
+        system_instruction=system_message
     )
 
     return interaction.output_text
