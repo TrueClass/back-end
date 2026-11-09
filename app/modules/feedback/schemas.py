@@ -14,6 +14,7 @@ class RatingItem(BaseModel):
     value: int
     boosts: int
     created_at: datetime
+    up_to_date: bool = Field(description="False when new ratings arrived after the summary was generated")
     sent_by_user: bool
     boosted_by_user: bool
 
@@ -26,3 +27,9 @@ class RatingsByClassItem(BaseModel):
 
 class BoostResponse(BaseModel):
     boosts: int
+
+class RatingSummary(BaseModel):
+    summary: str
+    rating_count: int = Field(description="Amount of ratings the summary was generated from")
+    created_at: datetime
+    up_to_date: bool = Field(description="False when new ratings arrived after the summary was generated")

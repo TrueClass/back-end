@@ -55,3 +55,21 @@ INCREMENT_BOOSTS = "UPDATE TC.rating SET boosts = boosts + 1 WHERE id = %s"
 DECREMENT_BOOSTS = "UPDATE TC.rating SET boosts = GREATEST(boosts - 1, 0) WHERE id = %s"
 
 GET_BOOST_COUNT = "SELECT boosts FROM TC.rating WHERE id = %s"
+
+CLASS_ITEM_SUMMARY = """
+    SELECT ai_summary, ai_summary_rating_count, ai_summary_created_at
+    FROM TC.class_item WHERE id = %s
+"""
+
+RATINGS_FOR_SUMMARY = """
+    SELECT r.content, r.value, r.boosts
+    FROM TC.rating r
+    WHERE r.class_item_id = %s AND r.active = 1
+    ORDER BY r.boosts DESC, r.id DESC LIMIT %s
+"""
+
+UPDATE_CLASS_ITEM_SUMMARY = """
+    UPDATE TC.class_item
+    SET ai_summary = %s, ai_summary_rating_count = %s, ai_summary_created_at = %s, ai_summary_model = %s
+    WHERE id = %s
+"""
