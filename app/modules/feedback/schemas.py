@@ -14,7 +14,6 @@ class RatingItem(BaseModel):
     value: int
     boosts: int
     created_at: datetime
-    up_to_date: bool = Field(description="False when new ratings arrived after the summary was generated")
     sent_by_user: bool
     boosted_by_user: bool
 
