@@ -203,7 +203,7 @@ def run_summary_generation(class_item_id: int, pool):
             system_message=SUMMARY_PROMPT,
             user_message=f"Feedbacks dos alunos:\n<feedbacks>\n{feedbacks}\n</feedbacks>",
             temperature=0.3,
-            max_tokens=500,
+            max_tokens=2000,
         )
 
         cursor.execute(models.UPDATE_CLASS_ITEM_SUMMARY, (summary, total, datetime.now(), model, class_item_id))

@@ -7,7 +7,7 @@ load_dotenv()
 COLIBRI_API_KEY = os.getenv("COLIBRI_API_KEY")
 COLIBRI_MODEL = "qwen3.6-colibri"
 GEMINI_MODEL = "gemini-3.8-flash"
-COLIBRI_TIMEOUT = 20
+COLIBRI_TIMEOUT = 60
 
 gemini_client = None
 
@@ -46,13 +46,13 @@ def colibri_request(system_message: str, user_message: str, max_tokens: int, tem
     return resp.json()['choices'][0]['message']['content']
     
 def gemini_request(system_message, message: str):
-    interaction = get_gemini_client().interactions.create(
+    response = get_gemini_client().models.generate_content(
         model=GEMINI_MODEL,
-        input=message,
-        system_instruction=system_message
+        contents=message,
+        config={"system_instruction": system_message}
     )
 
-    return interaction.output_text
+    return response.text
 
 def request_completion(system_message: str, user_message: str, temperature: float, max_tokens: int) -> tuple[str, str]:
     try:
