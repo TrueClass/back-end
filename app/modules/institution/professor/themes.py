@@ -1,4 +1,5 @@
 import json
+import logging
 import numpy as np
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
@@ -9,6 +10,8 @@ from rapidfuzz import fuzz
 from sklearn.cluster import AgglomerativeClustering
 from app.core.ai import gemini_structured_request, embed_texts, EMBEDDING_MODEL_ID, AIUnavailableError
 from . import models
+
+logger = logging.getLogger(__name__)
 
 EXTRACTION_BATCH_SIZE = 20
 EXTRACTION_WORKERS = 8
@@ -81,6 +84,7 @@ def _extract_batch(ratings: list[dict]) -> dict[int, list[tuple]] | None:
     try:
         result = gemini_structured_request(EXTRACTION_PROMPT, f"Feedbacks dos alunos:\n{feedbacks}", ExtractionResult)
     except AIUnavailableError:
+        logger.warning("Aspect extraction failed for a batch of %s ratings", len(ratings), exc_info=True)
         return None
 
     contents = {r["id"]: r["content"] for r in ratings}
@@ -153,6 +157,7 @@ def _name_themes(groups: list[list[dict]]) -> list[str]:
     try:
         result = gemini_structured_request(NAMING_PROMPT, samples, NamingResult)
     except AIUnavailableError:
+        logger.warning("Theme naming failed, using the most frequent aspect as name", exc_info=True)
         return fallback
 
     names = {t.theme_id: t.name.strip() for t in result.themes if t.name.strip()}
@@ -221,6 +226,7 @@ def run_themes_generation(professor_id: int, pool):
         cursor.execute(models.UPDATE_PROFESSOR_THEMES, (json.dumps(snapshot, ensure_ascii=False), processed, datetime.now(), professor_id))
         db.commit()
     except Exception:
+        logger.exception("Themes generation failed for professor %s", professor_id)
         db.rollback()
         cursor.execute(models.RELEASE_THEMES_GENERATION, (professor_id,))
         db.commit()
