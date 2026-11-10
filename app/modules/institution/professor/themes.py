@@ -11,7 +11,7 @@ from app.core.ai import gemini_structured_request, embed_texts, EMBEDDING_MODEL_
 from . import models
 
 EXTRACTION_BATCH_SIZE = 20
-EXTRACTION_WORKERS = 4
+EXTRACTION_WORKERS = 8
 EXCERPT_MIN_SCORE = 90
 ASPECT_MAX_LENGTH = 80
 # cosine distance under which two aspects are merged into the same theme; tune with real data

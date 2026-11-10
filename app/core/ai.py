@@ -72,6 +72,7 @@ def gemini_structured_request(system_message: str, message: str, schema, tempera
                 "temperature": temperature,
                 "response_mime_type": "application/json",
                 "response_schema": schema,
+                "thinking_config": {"thinking_level": "MINIMAL"},
             }
         )
     except Exception as err:
